@@ -1,5 +1,13 @@
 #+title: Literate Dotfiles
 
+These are my /literate/ dotfiles. To compile and deploy these files you need to
+run ~(org-bable-tangle)~. There are no additional settings that are needed to
+tangle this. Running the above command will create all the needed directories
+and files, and compile the configs specified here and deploy them to the right
+locations. To update a config file, make the edits and then run the same
+~(org-bable-tangle)~ function to update. Because of the ~:cache yes~ directive,
+Org-Babel will only change files if there are changes.
+
 * Boilerplate
 This is a brief header explaining that these files are generated with org-babel
 and should not be directly edited. This block doesn't actually do anything by
