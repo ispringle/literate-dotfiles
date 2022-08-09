@@ -1,0 +1,268 @@
+#+title: Literate Dotfiles
+
+* Boilerplate
+This is a brief header explaining that these files are generated with org-babel
+and should not be directly edited. This block doesn't actually do anything by
+itself, but it can be included in other files by including it in other blocks
+with ~<<boilerplate-file-header>>~.
+#+name: boilerplate-file-header
+#+begin_src sh :tangle no
+# This file was generated from a literate dotfiles config.
+# This file should not be directly edited. Instead edit
+# the literate-dotfiles repo and then tangle the file.
+# The repo can be found at:
+# https://github.com/pard68/literate-dotfiles
+#+end_src
+
+* ZSH
+First let's setup the various ZSH files that the shell expects. We like A S T H
+E T I C home directories, so we're going to hide our ZSH config files in the
+~\~/.config/~ dir like the good Lord intended.
+
+** Environment Variables
+:PROPERTIES:
+:header-args: :tangle ~/.zshenv :comments link :mkdirp yes :padline no :noweb tangle :cache yes
+:END:
+Sadly, ZSH sorta sucks and the ~.zshenv~ has to live in the home directory, so
+we're going to set that up and tell it to look in ~.config/zsh/~ for all the
+rest of the zsh config files we might use. So we'll setup the zshenv file to
+have all the right XDG settings, plus point all the various other things that
+need to be told to use .config to do so.
+
+First let's add the boilderplate header to this file:
+#+begin_src sh
+<<boilerplate-file-header>>
+#+end_src
+*** XDG and Zsh paths
+#+begin_src sh
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_DATA_HOME="$HOME/.cache/"
+export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
+export HISTFILE="$ZDOTDIR/zhistory"
+#+end_src
+
+*** HIST
+We want to make sure our history is nice and long. It's 2022, so we shouldn't
+worry too much about disk space or RAM... I hope
+
+#+begin_src sh
+export HISTSIZE=10000
+export SAVEHIST=10000
+#+end_src
+
+*** EDITOR
+Let's set our editor quickly so we can make sure we're never far away from
+emacs.
+
+#+begin_src sh
+export EDITOR="/usr/local/bin/emacsclient"
+export VISUAL="/usr/local/bin/emacsclient"
+#+end_src
+
+*** $PATH
+We'll setup some ~$PATH~ stuff now too. I really hate editing one-liner ~$PATH~
+exports, so we'll just do one per line, why not? Maybe there is a cool way to
+use org and iterate over a list of path values and concatenate them together,
+but IDK how to do that right now...
+
+#+begin_src sh
+export PATH="$HOME/.cargo/bin:$PATH"
+export PATH="$HOME/go/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="/usr/local/bin:$PATH"
+export PATH="/usr/bin:$PATH"
+export PATH="/bin:$PATH"
+export PATH="/usr/local/sbin:$PATH"
+export PATH="/usr/local/go/bin/:$PATH"
+export PATH="$HOME/.emacs.d/bin/:$PATH"
+export PATH="$HOME/.npm-global/bin:$PATH"
+#+end_src
+
+** Zshrc
+:PROPERTIES:
+:header-args: :tangle ~/.config/zsh/.zshrc :comments link :mkdirp yes :padline no :noweb tangle :cache yes
+:END:
+
+The zshrc file has to be prefixed with a ~.~ for Zsh to pick it up. It sorta sucks... but it's whatever I'll never really interact with that file.
+
+First let's add the boilderplate header to this file:
+#+begin_src sh
+<<boilerplate-file-header>>
+#+end_src
+*** A E S T H E T I C
+
+Your terminal, in Technicolor!
+#+begin_src sh
+autoload -U colors && colors
+PROMPT="%B%F{magenta}λ%f%b "
+RPROMPT="%*"
+#+end_src
+*** Zsh Options
+
+[[https://zsh.sourceforge.io/Doc/Release/Options.html][Here]] is a list of all the zsh options that can be set.
+#+begin_src sh
+setopt HIST_SAVE_NO_DUPS
+setopt INC_APPEND_HISTORY
+setopt HIST_IGNORE_SPACE
+
+setopt AUTO_CD
+setopt AUTO_PUSHD
+setopt PUSHD_IGNORE_DUPS
+setopt PUSHD_SILENT
+
+REPORTTIME=3
+#+end_src
+
+*** Ghetto Jump
+
+There are some neat "jump" plugins like ~j~ and ~z~. But we're just going to DIWhy it!
+#+begin_src sh
+alias d='dirs -v'
+for index ({1..9}) alias "$index"="cd + ${index}"; unset index
+#+end_src
+
+*** Completion
+
+#+begin_src sh
+autoload -U compinit
+zstyle ':completion:*' menu select completer _complete _correct _approximate
+zmodload zsh/complist
+compinit
+_comp_options+=(globdots)
+#+end_src
+
+** Aliases
+:PROPERTIES:
+:header-args: :tangle ~/.config/zsh/aliases :comments link :mkdirp yes :padline no :noweb tangle :cache yes
+:END:
+Before we make an alias file, let's source them from the zshrc file.
+#+begin_src sh :tangle ~/.config/zsh/.zshrc
+source $ZDOTDIR/aliases
+#+end_src
+
+Okay, now onto the aliases file. First let's add the boilderplate header to this file:
+#+begin_src sh
+<<boilerplate-file-header>>
+#+end_src
+
+*** Clear
+#+begin_src sh
+alias c!=clear
+#+end_src
+*** Git
+#+begin_src sh
+alias g=git
+alias ga="git add"
+alias ga.="git add ."
+alias gb="git branch"
+alias gbd="git branch -D"
+alias gc="git commit"
+alias gcm="git commit -m"
+alias gca="git commit --amend"
+alias gcm!!="git add .; git commit -m "Update!"; git push"
+alias gcl="git clone"
+alias gco="git checkout"
+alias gd="git diff"
+alias gl="git log"
+alias gm="git merge"
+alias gpl="git pull"
+alias gps="git push"
+alias gps!="git push --force"
+alias gpsu="git push -u origin master"
+alias gri="git rebase -i"
+alias gs="git status"
+#+end_src
+*** ls
+#+begin_src sh
+alias l="ls"
+alias la="ls -a"
+alias ll="ls -l"
+alias lla="ls -la"
+#+end_src
+
+* Kitty
+:PROPERTIES:
+:header-args: :tangle ~/.config/kitty/kitty.conf :comments link :mkdirp yes :padline no :noweb tangle :cache yes
+:END:
+
+Kitty is the terminal. I prefer to use. I don't use it much, with emacs around,
+but sometimes it's nice to have a real terminal. Before we start, let's add the
+boilerplate file header:
+#+begin_src sh
+<<boilerplate-file-header>>
+#+end_src
+** Font
+Set the font
+#+begin_src conf
+font_family scientifica
+font_size 16.0
+#+end_src
+** Default Options
+#+begin_src conf
+open_url_with default
+enable_audio_bell no
+tab_bar_style powerline
+background_opacity 0.9
+#+end_src
+** Mappings
+#+begin_src conf
+map ctrl+h neighboring_window left
+map ctrl+j neighboring_window down
+map ctrl+k neighboring_window up
+map ctrl+l neighboring_window right
+map ctrl+] next_tab
+map ctrl+[ previious_tab
+#+end_src
+** Theme
+Set the theme we'll use
+#+begin_src conf
+include theme.conf
+#+end_src
+
+And then define that theme. This is not something I created. I got it from [[https://github.com/mcchrish/zenbones.nvim/raw/main/extras/kitty/zenbones_dark.conf][here]].
+#+begin_src conf :tangle ~/.config/kitty/theme.conf
+<<boilerplate-file-header>>
+foreground                      #B4BDC3
+background                      #1C1917
+selection_foreground            #B4BDC3
+selection_background            #3D4042
+# Cursor colors
+cursor                          #C4CACF
+cursor_text_color               #1C1917
+# URL underline color when hovering with mouse
+# kitty window border colors
+# OS Window titlebar colors
+# Tab bar colors
+active_tab_foreground           #B4BDC3
+active_tab_background           #65435E
+inactive_tab_foreground         #B4BDC3
+inactive_tab_background         #352F2D
+# Colors for marks (marked text in the terminal)
+# The basic 16 colors
+# black
+color0 #1C1917
+color8 #403833
+# red
+color1 #DE6E7C
+color9 #E8838F
+# green
+color2  #819B69
+color10 #8BAE68
+# yellow
+color3  #B77E64
+color11 #D68C67
+# blue
+color4  #6099C0
+color12 #61ABDA
+# magenta
+color5  #B279A7
+color13 #CF86C1
+# cyan
+color6  #66A5AD
+color14 #65B8C1
+# white
+color7  #B4BDC3
+color15 #888F94
+# You can set the remaining 240 colors as color16 to color255.
+#+end_src
