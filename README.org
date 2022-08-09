@@ -1,4 +1,6 @@
-:LICENSE:
+#+title: Literate Dotfiles
+
+#+BEGIN_SRC :tangle no
 Literate Dotfiles -- Collection of configuration files written and compiled with org-mode
 Copyright (C) 2022 Ian S. Pringle
 
@@ -14,8 +16,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
-:END:
-#+title: Literate Dotfiles
+#+END_SRC
+
 These are my /literate/ dotfiles. To compile and deploy these files you need to
 run ~(org-bable-tangle)~. There are no additional settings that are needed to
 tangle this. Running the above command will create all the needed directories
