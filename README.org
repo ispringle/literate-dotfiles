@@ -1,23 +1,5 @@
 #+title: Literate Dotfiles
 
-#+BEGIN_SRC :tangle no
-Literate Dotfiles -- Collection of configuration files written and compiled with org-mode
-Copyright (C) 2022 Ian S. Pringle
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#+END_SRC
-
 These are my /literate/ dotfiles. To compile and deploy these files you need to
 run ~(org-bable-tangle)~. There are no additional settings that are needed to
 tangle this. Running the above command will create all the needed directories
@@ -56,7 +38,7 @@ have all the right XDG settings, plus point all the various other things that
 need to be told to use .config to do so.
 
 First let's add the boilderplate header to this file:
-#+begin_src sh
+#+begin_src sh :comments no
 <<boilerplate-file-header>>
 #+end_src
 *** XDG and Zsh paths
@@ -113,7 +95,7 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 The zshrc file has to be prefixed with a ~.~ for Zsh to pick it up. It sorta sucks... but it's whatever I'll never really interact with that file.
 
 First let's add the boilderplate header to this file:
-#+begin_src sh
+#+begin_src sh :comments no
 <<boilerplate-file-header>>
 #+end_src
 *** A E S T H E T I C
@@ -168,7 +150,7 @@ source $ZDOTDIR/aliases
 #+end_src
 
 Okay, now onto the aliases file. First let's add the boilderplate header to this file:
-#+begin_src sh
+#+begin_src sh :comments no
 <<boilerplate-file-header>>
 #+end_src
 
@@ -215,7 +197,7 @@ alias lla="ls -la"
 Kitty is the terminal. I prefer to use. I don't use it much, with emacs around,
 but sometimes it's nice to have a real terminal. Before we start, let's add the
 boilerplate file header:
-#+begin_src sh
+#+begin_src sh :comments no
 <<boilerplate-file-header>>
 #+end_src
 ** Font
@@ -241,54 +223,572 @@ map ctrl+] next_tab
 map ctrl+[ previious_tab
 #+end_src
 ** Theme
+:PROPERTIES:
+:header-args: :tangle ~/.config/kitty/theme.conf :comments link :mkdirp yes :padline no :noweb tangle :cache yes
+:END:
 Set the theme we'll use
-#+begin_src conf
+#+begin_src conf :tangle ~/.config/kitty/kitty.conf
 include theme.conf
 #+end_src
 
 And then define that theme. This is not something I created. I got it from [[https://github.com/mcchrish/zenbones.nvim/raw/main/extras/kitty/zenbones_dark.conf][here]].
-#+begin_src conf :tangle ~/.config/kitty/theme.conf
+#+begin_src conf :comments no
 <<boilerplate-file-header>>
+#+end_src
+
+**** Background and Foreground Colors
+#+begin_src conf
 foreground                      #B4BDC3
 background                      #1C1917
 selection_foreground            #B4BDC3
 selection_background            #3D4042
-# Cursor colors
+#+end_src
+**** Cursor Colors
+#+begin_src conf
 cursor                          #C4CACF
 cursor_text_color               #1C1917
-# URL underline color when hovering with mouse
-# kitty window border colors
-# OS Window titlebar colors
-# Tab bar colors
+#+end_src
+**** Tab Colors
+#+begin_src conf
 active_tab_foreground           #B4BDC3
 active_tab_background           #65435E
 inactive_tab_foreground         #B4BDC3
 inactive_tab_background         #352F2D
-# Colors for marks (marked text in the terminal)
-# The basic 16 colors
-# black
+#+end_src
+**** Color Definitions
+***** Black
+#+begin_src conf
 color0 #1C1917
 color8 #403833
-# red
+#+end_src
+***** Red
+#+begin_src conf
 color1 #DE6E7C
 color9 #E8838F
-# green
+#+end_src
+***** Green
+#+begin_src conf
 color2  #819B69
 color10 #8BAE68
-# yellow
+#+end_src
+***** Yellow
+#+begin_src conf
 color3  #B77E64
 color11 #D68C67
-# blue
+#+end_src
+***** Blue
+#+begin_src conf
 color4  #6099C0
 color12 #61ABDA
-# magenta
+#+end_src
+***** Magenta
+#+begin_src conf
 color5  #B279A7
 color13 #CF86C1
-# cyan
+#+end_src
+***** Cyan
+#+begin_src conf
 color6  #66A5AD
 color14 #65B8C1
-# white
+#+end_src
+***** White
+#+begin_src conf
 color7  #B4BDC3
 color15 #888F94
-# You can set the remaining 240 colors as color16 to color255.
 #+end_src
+
+* Hammerspoon
+:PROPERTIES:
+:header-args: :tangle ~/.hammerspoon/init.lua :comments link :mkdirp yes :padline no :noweb tangle :cache yes
+:END:
+
+#+begin_src lua :comments no
+--[[
+<<boilerplate-file-header>>
+]]
+#+end_src
+
+I really only want Hammerspoon around on Mac, but I'm not currently sure how to
+best add that conditional nature into org-babel. So we'll just install it all
+and if it's not Mac... well it'll just never get used. Also, should be noted
+that Hammerspoon doesn't seem to respect the XDG stuff and just puts its config
+directory in the root of your home dir like a pig.
+
+First thing, let's install the hs cli tool so we can call Hammerspoon from the
+terminal if we need to. By default it'll install to the ~/usr/local/bin~.
+#+begin_src lua
+require'hs.ipc'
+hs.ipc.cliInstall()
+#+end_src
+
+Next let's setup a few default key combos.
+#+begin_src lua
+local meh = {"ctrl", "alt", "shift"}
+local super = {"ctrl", "alt", "cmd"}
+local hyper = {"ctrl", "alt", "cmd", "shift"}
+#+end_src
+
+#+begin_src lua
+  hs.hotkey.bindSpec({ { "ctrl", "cmd", "alt" }, "h" },
+    function()
+      hs.notify.new({title="Hello World!", informativeText="Welcome to Hammerspoon"}):send()
+    end
+  )
+#+end_src
+** Spoons
+These are the various spoons I'm using. Sadly, I am not sure the best way to
+clone repos in this literate config setup, so I'm just copy/pasting the spoons.
+Eventually I do hope to have a better way of doing this though.
+*** Edit With Emacs
+This spoon allows me to take any text area and edit that text area with emacs,
+and then send the text edited in Emacs back to that textbox when done. This
+spoon is from the GitHub user [[https://github.com/dmgerman/editWithEmacs.spoon/][dmgerman]].
+
+**** Load Spoon and Add Bindings
+#+begin_src lua
+hs.loadSpoon("editWithEmacs")
+if spoon.editWithEmacs then
+  local bindings = {
+    edit_selection = { hyper, "e" },
+    edit_all = { meh, "e" }
+  }
+  spoon.editWithEmacs:bindHotkeys(bindings)
+end
+#+end_src
+**** Source
+
+***** Init.lua
+#+begin_src lua :tangle ~/.hammerspoon/Spoons/editWithEmacs.spoon/init.lua
+---
+
+local obj={}
+
+obj.__index = obj
+
+-- metadata for all spoons
+obj.name = "editWithEmacs"
+obj.version = "0.2"
+obj.author = "Daniel German <dmg@uvic.ca> and  Jeremy Friesen <emacs@jeremyfriesen.com>"
+obj.homepage = "https://github.com/dmgerman/editWithEmacs.spoon"
+obj.license = "MIT - https://opensource.org/licenses/MIT"
+
+-- Additional local variables for managing the state of editing.
+
+-- the current instance of Emacs
+obj.currentEmacs = nil
+
+-- the current non-Emacs window from which we will begin editing
+obj.currentWindow = nil
+
+-- The command to invoke
+-- make it non-blocking
+obj.openEditorShellCommand = "emacsclient -e '(hammerspoon-edit-begin)' --create-frame -n"
+
+-- The name of the Emacs application
+obj.emacsAppName = "Emacs"
+
+require ("hs.ipc")
+
+if not hs.ipc.cliStatus() then
+   hs.alert("hs is not installed.. Installing in default location /usr/local")
+   -- if this fails, try to install to a different location
+   -- e.g. hs.ipc.cliInstall('/Users/<yourusername>/bin') and
+   -- add the directory to your path
+   hs.ipc.cliInstall()
+   if not hs.ipc.cliStatus() then
+      hs.alert("Unable to install ipc module in /usr/local. editWithEmacs will not function.")
+      print("\n\neditWithEmacs: unable to install ipc module. You might have to do it manually. ",
+            "Make sure you can execute /usr/local/bin/hs from command line. See documentation of hs.ipc\n",
+            "For example: at /usr/local do\n",
+            "sudo ln -s /Applications/Hammerspoon.app/Contents/Frameworks/hs/hs .\n",
+            "\n")
+      return obj
+   end
+end
+
+-- Open the editor and give it focus.
+function obj:openEditor()
+   if self.currentEmacs then
+      hs.execute(self.openEditorShellCommand, true)
+      self.currentEmacs:activate()
+   else
+      -- this should not be executed
+      hs.alert("No " .. self.emacsAppName .. " window found")
+   end
+end
+
+-- Begin the edit with Emacs experience
+function obj:beginEditing(everything)
+   -- everything: if true, do the equivalent of Ctrl-A
+   ---            select everything
+   w = hs.window.focusedWindow()
+   if w:title():sub(1, 5) == self.emacsAppName then
+      hs.alert("🤔 already in " .. self.emacsAppName .. ". Ignoring request")
+      return
+   end
+   self.currentEmacs = hs.application.find(self.emacsAppName)
+
+   if not self.currentEmacs then
+      hs.alert("No " .. self.emacsAppName .. " window found. Ignoring request")
+      return
+   end
+
+   self.currentWindow = w
+
+   -- use the selection as the text to send to emacs
+   -- we use the clipboard to communicate both ways with emacs...
+   -- there could be other ways, but this is simple and effective
+   if everything then
+      -- this basically says, ignore current selection and select current text
+      hs.eventtap.keyStroke({"cmd"}, "a")
+      -- copy selection into the clipboard
+      hs.eventtap.keyStroke({"cmd"}, "c")
+   else
+      -- otherwise we have to cut,
+      hs.eventtap.keyStroke({"cmd"}, "x")
+   end
+
+   hs.notify.new({title=w:application():title(), informativeText="«" .. w:title() .. "»", subTitle="Editing in " .. self.emacsAppName}):send()
+   self:openEditor()
+end
+
+function obj:bindHotkeys(mapping)
+   local def = {
+      edit_selection = function() self:beginEditing(false) end,
+      edit_all       = function() self:beginEditing(true) end
+   }
+   hs.spoons.bindHotkeysToSpec(def, mapping)
+end
+
+function obj:endEditing(everything)
+   -- the text is in the clipboard
+   -- enable the original window and see what happens
+   -- this is usually run by emacs using hs
+
+   print(self.emacsAppName .. " is sending back the text")
+
+   if not self.currentWindow then
+      hs.alert("No current window active")
+   else
+      if (self.currentWindow:focus()) then
+         if everything then
+            hs.eventtap.keyStroke({"cmd"}, "a")
+         end
+         hs.eventtap.keyStroke({"cmd"}, "v")
+      else
+         hs.alert("Window to send back text does not exist any more")
+      end
+   end
+
+end
+
+print("Finished loading editWithEmacs.spoon" )
+
+return obj
+#+end_src
+
+***** hammerspoon.el
+For this to work we need to load some elisp with ~(load
+"~/.hammerspoon/Spoons/editWithEmacs.spoon/hammerspoon.el")~. Make sure to put
+that somewhere into your emacs config.
+
+#+begin_src emacs-lisp :tangle ~/.hammerspoon/Spoons/editWithEmacs.spoon/hammerspoon.el
+;;; editWithEmacs.el --- communicate with hammerspoon to editWithEmacs anywhere
+
+;; Copyright (C) 2021 Daniel M. German <dmg@turingmachine.org>
+;;                             Jeremy Friesen <emacs@jeremyfriesen.com>
+;;
+
+;; Author: Daniel M. German <dmg@turingmachine.org>
+;;         Jeremy Friesen <emacs@jeremyfriesen.com>
+;;
+;; Maintainer: Daniel M. German <dmg@turingmachine.org>
+;;
+;; Keywords: hammerspoon, os x
+;; Homepage: https://github.com/dmgerman/editWithEmacs.spoon
+
+;; GNU Emacs is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; GNU Emacs is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; Use emacs and hammerspoon to edit text in any input box in os x
+;; See: https://github.com/dmgerman/editWithEmacs.spoon
+;;
+
+;;; Code:
+
+
+(defvar hammerspoon-buffer-mode 'markdown-mode
+  "Name of major mode for hammerspoon editing")
+
+(defvar hammerspoon-buffer-name "*hammerspoon_edit*"
+  "Name of the buffer used to edit in emacs.")
+
+(defvar hammerspoon-edit-minor-map nil
+  "Keymap used in hammer-edit-minor-mode.")
+(unless hammerspoon-edit-minor-map
+  (let ((map (make-sparse-keymap)))
+
+    (define-key map (kbd "C-c C-c") 'hammerspoon-edit-end)
+    (define-key map (kbd "C-c m")   'hammerspoon-toggle-mode)
+    (define-key map (kbd "C-c h")   'hammerspoon-test) ;; for testing
+
+    (setq hammerspoon-edit-minor-map map)))
+
+(define-minor-mode hammerspoon-edit-minor-mode
+  "Minor mode to help with editing with hammerspoon"
+
+  :global nil
+  :lighter   "_hs-edit_"
+  :keymap hammerspoon-edit-minor-map
+
+  ;; if disabling `undo-tree-mode', rebuild `buffer-undo-list' from tree so
+  ;; Emacs undo can work
+  )
+
+(defun hammerspoon-toggle-mode ()
+  "Toggle from Markdown Mode to Org Mode."
+  (interactive)
+  (if (string-equal "markdown-mode" (format "%s" major-mode))
+      (org-mode)
+    (markdown-mode))
+  (hammerspoon-edit-minor-mode))
+
+(defun hammerspoon-do (command)
+  "Send Hammerspoon the given COMMAND."
+  (interactive "sHammerspoon Command:")
+  (setq hs-binary (executable-find "hs"))
+  (if hs-binary
+      (call-process hs-binary
+                    nil 0 nil
+                    "-c"
+                    command)
+    (message "Hammerspoon hs executable not found. Make sure you hammerspoon has loaded the ipc module")))
+
+(defun hammerspoon-alert (message)
+  "Show given MESSAGE via Hammerspoon's alert system."
+  (hammerspoon-do (concat "hs.alert.show('" message "', 1)")))
+
+(defun hammerspoon-test ()
+  "Show a test message via Hammerspoon's alert system.
+If you see a message, Hammerspoon is working correctly."
+  (interactive)
+  (hammerspoon-alert "Hammerspoon test message..."))
+
+(defun hammerspoon-edit-end ()
+  "Send, via Hammerspoon, contents of buffer back to originating window."
+  (interactive)
+  (mark-whole-buffer)
+  (call-interactively 'kill-ring-save)
+  (hammerspoon-do (concat "spoon.editWithEmacs:endEditing(False)"))
+  (previous-buffer))
+
+(defun hammerspoon-edit-begin ()
+  "Receive, from Hammerspoon, text to edit in Emacs"
+  (interactive)
+  (let ((hs-edit-buffer (get-buffer-create hammerspoon-buffer-name)))
+    (switch-to-buffer hs-edit-buffer)
+    (erase-buffer) ; Ensure we have a clean buffer
+    (yank)
+    (funcall hammerspoon-buffer-mode)
+    (hammerspoon-edit-minor-mode)
+    (message "Type C-c C-c to send back to originating window")
+    (exchange-point-and-mark)))
+#+end_src
+
+* isync/mbsync
+:PROPERTIES:
+:header-args: :tangle ~/.config/isync/mbsyncrc :comments link :mkdirp yes :padline no :noweb tangle :cache yes
+:END:
+This is my isync/mbsync config. I'm using the password store for secrets when
+applicable.
+#+begin_src sh :comments no
+<<boilerplate-file-header>>
+#+end_src
+** Personal Protonmail Accounts
+I have a number of protonmail accounts. They have virtually the same settings,
+even the same password. I am not using the password store for the Proton email
+accounts because this password is only applicable to the Proton bridge on my
+machine and I don't have a concern about storing it in plaintext since it's
+already available in plaintext on the machine anyway. I am just storing it in a
+txt file so that this is a bit more portable.
+
+There must be a empty line between accounts. So for this to work we need one
+empty line at the end of each config. ~org-tangle~ removes trailing whitespace,
+so this means we need to add a new line and then an empty comment. There might
+be a better way to do this but I am unaware of it.
+
+*** TODO Make this programmatic, so it just needs a list of email addresses
+
+*** ipringle@protonmail.com
+#+begin_src sh
+IMAPAccount ipringle-protonmail
+Host 127.0.0.1
+Port 1143
+User pard@0x44.pw
+PassCmd "cat ~/.config/isync/proton-bridge-password"
+SSLType NONE
+
+IMAPStore ipringle-protonmail-remote
+Account ipringle-protonmail
+
+MaildirStore ipringle-protonmail-local
+Subfolders Verbatim
+Path ~/mail/ipringle@protonmail.com/
+Inbox ~/mail/ipringle@protonmail.com/INBOX
+
+Channel ipringle-protonmail
+Far :ipringle-protonmail-remote:
+Near :ipringle-protonmail-local:
+Patterns *
+Create Both
+SyncState *
+
+#
+#+end_src
+*** ian@dapringles.com
+#+begin_src sh
+IMAPAccount ian-dapringles
+Host 127.0.0.1
+Port 1143
+User ian@dapringles.com
+PassCmd "cat ~/.config/isync/proton-bridge-password"
+SSLType NONE
+
+IMAPStore ian-dapringles-remote
+Account ian-dapringles
+
+MaildirStore ian-dapringles-local
+Subfolders Verbatim
+Path ~/mail/ian@dapringles.com/
+Inbox ~/mail/ian@dapringles.com/INBOX
+
+Channel ian-dapringles
+Far :ian-dapringles-remote:
+Near :ian-dapringles-local:
+Patterns *
+Create Both
+SyncState *
+
+#
+#+end_src
+*** pard@0x44.pw
+#+begin_src sh
+IMAPAccount pard-0x44
+Host 127.0.0.1
+Port 1143
+User pard@0x44.pw
+PassCmd "cat ~/.config/isync/proton-bridge-password"
+SSLType NONE
+
+IMAPStore pard-0x44-remote
+Account pard-0x44
+
+MaildirStore pard-0x44-local
+Subfolders Verbatim
+Path ~/mail/pard@0x44.pw/
+Inbox ~/mail/pard@0x44.pw/INBOX
+
+Channel pard-0x44
+Far :pard-0x44-remote:
+Near :pard-0x44-local:
+Patterns *
+Create Both
+SyncState *
+
+#
+#+end_src
+** Work Gmail
+This is my config for my work gmail account. I'm not tangling this because using
+Gmail with mbsync/mu4e is super annoying and I cannot get sending to work for
+some reason. Plus we're migrating /away/ from Gmail so it's less important.
+#+begin_src sh :tangle no
+# ian@hydrobuilder.com
+IMAPAccount work-gmail
+Host imap.gmail.com
+User ian@hydrobuilder.com
+PassCmd "pass email/ian@hydrobuilder.com"
+AuthMechs LOGIN
+SSLType IMAPS
+
+IMAPStore gmail-remote
+Account gmail
+
+MaildirStore gmail-local
+Path ~/mail/hydrobuilder/
+Inbox ~/mail/hydrobuilder/INBOX
+Subfolders Verbatim
+
+Channel gmail
+Far :gmail-remote:
+Near :gmail-local:
+CopyArrivalDate yes
+Patterns * ![Gmail]* "[Gmail]/Sent Mail" "[Gmail]/Trash"
+Create Both
+Expunge Both
+SyncState *
+
+#
+#+end_src
+
+** Work Outlook
+Nothing fancy here, should be noted that the password is an app-password because
+of 2fa requirements.
+#+begin_src sh
+# i.pringle@hbhold.com
+IMAPAccount work
+Host outlook.office365.com
+User i.pringle@hbhold.com
+PassCmd "pass email/i.pringle@hbhold.com"
+AuthMechs LOGIN
+SSLType IMAPS
+
+IMAPStore work-remote
+Account work
+
+MaildirStore work-local
+Path ~/mail/ipringle@hbhold.com/
+Inbox ~/mail/ipringle@hbhold.com/Inbox
+Subfolders Verbatim
+
+Channel work
+Far :work-remote:
+Near :work-local:
+Patterns "INBOX" *
+Create Both
+Sync all
+Expunge Both
+SyncState *
+
+#
+#+end_src
+* License
+
+#+BEGIN_SRC :tangle no
+Literate Dotfiles -- Collection of configuration files written and compiled with org-mode
+Copyright (C) 2022 Ian S. Pringle
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#+END_SRC
