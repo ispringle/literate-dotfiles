@@ -22,7 +22,7 @@ with ~<<boilerplate-file-header>>~.
 # https://github.com/pard68/literate-dotfiles
 #+end_src
 
-* ZSH
+* Shell
 First let's setup the various ZSH files that the shell expects. We like A S T H
 E T I C home directories, so we're going to hide our ZSH config files in the
 ~\~/.config/~ dir like the good Lord intended.
@@ -49,7 +49,7 @@ export XDG_DATA_HOME="$HOME/.cache/"
 export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
 export HISTFILE="$ZDOTDIR/zhistory"
 
-export DOOM_EMACS=$XDG_DATA_HOME/doom.d
+export DOOM_EMACS=$XDG_CONFIG_HOME/emacs
 export DOOMDIR=$XDG_CONFIG_HOME/doom
 #+end_src
 
@@ -86,7 +86,7 @@ export PATH="/usr/bin:$PATH"
 export PATH="/bin:$PATH"
 export PATH="/usr/local/sbin:$PATH"
 export PATH="/usr/local/go/bin/:$PATH"
-export PATH="$HOME/.emacs.d/bin/:$PATH"
+export PATH="$XDG_CONFIG_HOME/emacs/bin/:$PATH"
 export PATH="$HOME/.npm-global/bin:$PATH"
 #+end_src
 
