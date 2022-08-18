@@ -551,6 +551,14 @@ Stackline isn't technically a spoon but that might be changing, and since I'd ra
 sl = require('stackline')
 sl:init()
 #+end_src
+***** Keybindings
+These some bindings someone created to use the same keys for cycling yabai
+stacked and non-stacked spaces. I need to convert this to Lua so we can do this
+with Hammerspoon.
+#+begin_src shell :tangle no
+cmd + shift - k : if [ "$(yabai -m query --spaces --space | jq -r '.type')" = "stack" ]; then (yabai -m window --focus stack.next || yabai -m window --focus stack.first); else yabai -m window --focus next || yabai -m window --focus first; fi
+cmd + shift - j : if [ "$(yabai -m query --spaces --space | jq -r '.type')" = "stack" ]; then (yabai -m window --focus stack.prev || yabai -m window --focus stack.last); else yabai -m window --focus prev || yabai -m window --focus last; fi
+#+end_src
 **** Edit With Emacs
 This spoon allows me to take any text area and edit that text area with emacs,
 and then send the text edited in Emacs back to that textbox when done. This
