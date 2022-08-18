@@ -117,7 +117,6 @@ Your terminal, in Technicolor!
 #+begin_src sh
 autoload -U colors && colors
 PROMPT="%B%F{magenta}λ%f%b "
-RPROMPT="%*"
 #+end_src
 *** Zsh Options
 
@@ -318,17 +317,18 @@ color15 #888F94
 :header-args: :tangle ~/.hammerspoon/init.lua :comments link :mkdirp yes :padline no :noweb tangle :cache yes
 :END:
 
-#+begin_src lua :comments no
---[[
-<<boilerplate-file-header>>
---]]
-#+end_src
-
 I really only want Hammerspoon around on Mac, but I'm not currently sure how to
 best add that conditional nature into org-babel. So we'll just install it all
 and if it's not Mac... well it'll just never get used. Also, should be noted
 that Hammerspoon doesn't seem to respect the XDG stuff and just puts its config
 directory in the root of your home dir like a pig.
+
+** Boilerplater
+#+begin_src lua :comments no
+--[[
+<<boilerplate-file-header>>
+--]]
+#+end_src
 
 First thing, let's install the hs cli tool so we can call Hammerspoon from the
 terminal if we need to. By default it'll install to the ~/usr/local/bin~.
@@ -336,21 +336,13 @@ terminal if we need to. By default it'll install to the ~/usr/local/bin~.
 require'hs.ipc'
 hs.ipc.cliInstall()
 #+end_src
-
 Next let's setup a few default key combos.
 #+begin_src lua
 local meh = {"ctrl", "alt", "shift"}
 local super = {"ctrl", "alt", "cmd"}
 local hyper = {"ctrl", "alt", "cmd", "shift"}
 #+end_src
-
-#+begin_src lua
-  hs.hotkey.bindSpec({ { "ctrl", "cmd", "alt" }, "h" },
-    function()
-      hs.notify.new({title="Hello World!", informativeText="Welcome to Hammerspoon"}):send()
-    end
-  )
-#+end_src
+** Keybindings
 ** Spoons
 These are the various spoons I'm using. Sadly, I am not sure the best way to
 clone repos in this literate config setup, so I'm just copy/pasting the spoons.
@@ -796,6 +788,7 @@ SyncState *
 
 #
 #+end_src
+* yabai
 * License
 
 #+BEGIN_SRC :tangle no
