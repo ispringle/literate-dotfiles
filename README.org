@@ -48,6 +48,9 @@ export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_DATA_HOME="$HOME/.cache/"
 export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
 export HISTFILE="$ZDOTDIR/zhistory"
+
+export DOOM_EMACS=$XDG_DATA_HOME/doom.d
+export DOOMDIR=$XDG_CONFIG_HOME/doom
 #+end_src
 
 *** HIST
@@ -188,7 +191,10 @@ alias la="ls -a"
 alias ll="ls -l"
 alias lla="ls -la"
 #+end_src
-
+*** mbsync
+#+begin_src sh
+alias mbsync="mbsync -c ~/.config/isync/mbsyncrc"
+#+end_src
 * Kitty
 :PROPERTIES:
 :header-args: :tangle ~/.config/kitty/kitty.conf :comments link :mkdirp yes :padline no :noweb tangle :cache yes
@@ -652,7 +658,9 @@ Channel ipringle-protonmail
 Far :ipringle-protonmail-remote:
 Near :ipringle-protonmail-local:
 Patterns *
+CopyArrivalDate yes
 Create Both
+Expunge Both
 SyncState *
 
 #
@@ -678,7 +686,9 @@ Channel ian-dapringles
 Far :ian-dapringles-remote:
 Near :ian-dapringles-local:
 Patterns *
+CopyArrivalDate yes
 Create Both
+Expunge Both
 SyncState *
 
 #
@@ -704,7 +714,9 @@ Channel pard-0x44
 Far :pard-0x44-remote:
 Near :pard-0x44-local:
 Patterns *
+CopyArrivalDate yes
 Create Both
+Expunge Both
 SyncState *
 
 #
@@ -766,6 +778,7 @@ Channel work
 Far :work-remote:
 Near :work-local:
 Patterns "INBOX" *
+CopyArrivalDate yes
 Create Both
 Sync all
 Expunge Both
