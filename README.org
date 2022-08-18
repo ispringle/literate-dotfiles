@@ -8,6 +8,16 @@ locations. To update a config file, make the edits and then run the same
 ~(org-bable-tangle)~ function to update. Because of the ~:cache yes~ directive,
 Org-Babel will only change files if there are changes.
 
+* Log
+** <2022-08-18 Thu>
+I'm trying to decide how to incorporate my doom config into this. I /really/
+want to be /orgish/ and use one file for all my configurations. I suspect that
+might not eventually and ultimately be what I do though. Nonetheless, I can try!
+
+I'm also not sure if I /want/ to use the ~README.org~ for my config, but it does
+have the advantage of being displayed automatically by nearly all VCS GUIs in
+the world.
+
 * Boilerplate
 This is a brief header explaining that these files are generated with org-babel
 and should not be directly edited. This block doesn't actually do anything by
