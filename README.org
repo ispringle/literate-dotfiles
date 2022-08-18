@@ -18,7 +18,8 @@ I'm also not sure if I /want/ to use the ~README.org~ for my config, but it does
 have the advantage of being displayed automatically by nearly all VCS GUIs in
 the world.
 
-* Boilerplate
+* Configurations
+** Boilerplate
 This is a brief header explaining that these files are generated with org-babel
 and should not be directly edited. This block doesn't actually do anything by
 itself, but it can be included in other files by including it in other blocks
@@ -32,12 +33,12 @@ with ~<<boilerplate-file-header>>~.
 # https://github.com/pard68/literate-dotfiles
 #+end_src
 
-* Shell
+** Shell
 First let's setup the various ZSH files that the shell expects. We like A S T H
 E T I C home directories, so we're going to hide our ZSH config files in the
 ~\~/.config/~ dir like the good Lord intended.
 
-** Environment Variables
+*** Environment Variables
 :PROPERTIES:
 :header-args: :tangle ~/.zshenv :comments link :mkdirp yes :padline no :noweb tangle :cache yes
 :END:
@@ -51,7 +52,7 @@ First let's add the boilderplate header to this file:
 #+begin_src sh :comments no
 <<boilerplate-file-header>>
 #+end_src
-*** XDG and Zsh paths
+**** XDG and Zsh paths
 #+begin_src sh
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_DATA_HOME="$HOME/.local/share"
@@ -63,7 +64,7 @@ export DOOM_EMACS=$XDG_CONFIG_HOME/emacs
 export DOOMDIR=$XDG_CONFIG_HOME/doom
 #+end_src
 
-*** HIST
+**** HIST
 We want to make sure our history is nice and long. It's 2022, so we shouldn't
 worry too much about disk space or RAM... I hope
 
@@ -72,16 +73,17 @@ export HISTSIZE=10000
 export SAVEHIST=10000
 #+end_src
 
-*** EDITOR
+**** EDITOR
 Let's set our editor quickly so we can make sure we're never far away from
 emacs.
 
 #+begin_src sh
 export EDITOR="/usr/local/bin/emacsclient"
 export VISUAL="/usr/local/bin/emacsclient"
+export ALTERNATE_EDITOR="/usr/local/bin/nvim"
 #+end_src
 
-*** $PATH
+**** $PATH
 We'll setup some ~$PATH~ stuff now too. I really hate editing one-liner ~$PATH~
 exports, so we'll just do one per line, why not? Maybe there is a cool way to
 use org and iterate over a list of path values and concatenate them together,
@@ -100,7 +102,7 @@ export PATH="$XDG_CONFIG_HOME/emacs/bin/:$PATH"
 export PATH="$HOME/.npm-global/bin:$PATH"
 #+end_src
 
-** Zshrc
+*** Zshrc
 :PROPERTIES:
 :header-args: :tangle ~/.config/zsh/.zshrc :comments link :mkdirp yes :padline no :noweb tangle :cache yes
 :END:
@@ -111,14 +113,14 @@ First let's add the boilderplate header to this file:
 #+begin_src sh :comments no
 <<boilerplate-file-header>>
 #+end_src
-*** A E S T H E T I C
+**** A E S T H E T I C
 
 Your terminal, in Technicolor!
 #+begin_src sh
 autoload -U colors && colors
-PROMPT="%B%F{magenta}λ%f%b "
+PROMPT="(%B%T%b) %B%F{magenta}λ%f%b "
 #+end_src
-*** Zsh Options
+**** Zsh Options
 
 [[https://zsh.sourceforge.io/Doc/Release/Options.html][Here]] is a list of all the zsh options that can be set.
 #+begin_src sh
@@ -134,7 +136,7 @@ setopt PUSHD_SILENT
 REPORTTIME=3
 #+end_src
 
-*** Ghetto Jump
+**** Ghetto Jump
 
 There are some neat "jump" plugins like ~j~ and ~z~. But we're just going to DIWhy it!
 #+begin_src sh
@@ -142,7 +144,7 @@ alias d='dirs -v'
 for index ({1..9}) alias "$index"="cd + ${index}"; unset index
 #+end_src
 
-*** Completion
+**** Completion
 
 #+begin_src sh
 autoload -U compinit
@@ -152,7 +154,7 @@ compinit
 _comp_options+=(globdots)
 #+end_src
 
-** Aliases
+*** Aliases
 :PROPERTIES:
 :header-args: :tangle ~/.config/zsh/aliases :comments link :mkdirp yes :padline no :noweb tangle :cache yes
 :END:
@@ -166,11 +168,11 @@ Okay, now onto the aliases file. First let's add the boilderplate header to this
 <<boilerplate-file-header>>
 #+end_src
 
-*** Clear
+**** Clear
 #+begin_src sh
 alias c!=clear
 #+end_src
-*** Git
+**** Git
 #+begin_src sh
 alias g=git
 alias ga="git add"
@@ -193,18 +195,18 @@ alias gpsu="git push -u origin master"
 alias gri="git rebase -i"
 alias gs="git status"
 #+end_src
-*** ls
+**** ls
 #+begin_src sh
 alias l="ls"
 alias la="ls -a"
 alias ll="ls -l"
 alias lla="ls -la"
 #+end_src
-*** mbsync
+**** mbsync
 #+begin_src sh
 alias mbsync="mbsync -c ~/.config/isync/mbsyncrc"
 #+end_src
-* Kitty
+** Kitty
 :PROPERTIES:
 :header-args: :tangle ~/.config/kitty/kitty.conf :comments link :mkdirp yes :padline no :noweb tangle :cache yes
 :END:
@@ -215,20 +217,20 @@ boilerplate file header:
 #+begin_src sh :comments no
 <<boilerplate-file-header>>
 #+end_src
-** Font
+*** Font
 Set the font
 #+begin_src conf
 font_family scientifica
 font_size 16.0
 #+end_src
-** Default Options
+*** Default Options
 #+begin_src conf
 open_url_with default
 enable_audio_bell no
 tab_bar_style powerline
 background_opacity 0.9
 #+end_src
-** Mappings
+*** Mappings
 #+begin_src conf
 map ctrl+h neighboring_window left
 map ctrl+j neighboring_window down
@@ -237,7 +239,7 @@ map ctrl+l neighboring_window right
 map ctrl+] next_tab
 map ctrl+[ previious_tab
 #+end_src
-** Theme
+*** Theme
 :PROPERTIES:
 :header-args: :tangle ~/.config/kitty/theme.conf :comments link :mkdirp yes :padline no :noweb tangle :cache yes
 :END:
@@ -251,68 +253,68 @@ And then define that theme. This is not something I created. I got it from [[htt
 <<boilerplate-file-header>>
 #+end_src
 
-**** Background and Foreground Colors
+***** Background and Foreground Colors
 #+begin_src conf
 foreground                      #B4BDC3
 background                      #1C1917
 selection_foreground            #B4BDC3
 selection_background            #3D4042
 #+end_src
-**** Cursor Colors
+***** Cursor Colors
 #+begin_src conf
 cursor                          #C4CACF
 cursor_text_color               #1C1917
 #+end_src
-**** Tab Colors
+***** Tab Colors
 #+begin_src conf
 active_tab_foreground           #B4BDC3
 active_tab_background           #65435E
 inactive_tab_foreground         #B4BDC3
 inactive_tab_background         #352F2D
 #+end_src
-**** Color Definitions
-***** Black
+***** Color Definitions
+****** Black
 #+begin_src conf
 color0 #1C1917
 color8 #403833
 #+end_src
-***** Red
+****** Red
 #+begin_src conf
 color1 #DE6E7C
 color9 #E8838F
 #+end_src
-***** Green
+****** Green
 #+begin_src conf
 color2  #819B69
 color10 #8BAE68
 #+end_src
-***** Yellow
+****** Yellow
 #+begin_src conf
 color3  #B77E64
 color11 #D68C67
 #+end_src
-***** Blue
+****** Blue
 #+begin_src conf
 color4  #6099C0
 color12 #61ABDA
 #+end_src
-***** Magenta
+****** Magenta
 #+begin_src conf
 color5  #B279A7
 color13 #CF86C1
 #+end_src
-***** Cyan
+****** Cyan
 #+begin_src conf
 color6  #66A5AD
 color14 #65B8C1
 #+end_src
-***** White
+****** White
 #+begin_src conf
 color7  #B4BDC3
 color15 #888F94
 #+end_src
 
-* Hammerspoon
+** Hammerspoon
 :PROPERTIES:
 :header-args: :tangle ~/.hammerspoon/init.lua :comments link :mkdirp yes :padline no :noweb tangle :cache yes
 :END:
@@ -323,36 +325,243 @@ and if it's not Mac... well it'll just never get used. Also, should be noted
 that Hammerspoon doesn't seem to respect the XDG stuff and just puts its config
 directory in the root of your home dir like a pig.
 
-** Boilerplater
+*** Boilerplate
 #+begin_src lua :comments no
 --[[
 <<boilerplate-file-header>>
 --]]
 #+end_src
 
+**** Hammerspoon CLI Tool
 First thing, let's install the hs cli tool so we can call Hammerspoon from the
 terminal if we need to. By default it'll install to the ~/usr/local/bin~.
 #+begin_src lua
 require'hs.ipc'
 hs.ipc.cliInstall()
 #+end_src
+
+**** Config Reloader
+And let's setup auto reloading for hammerspoon. First the reload function,
+stolen from [[https://github.com/wangshub/hammerspoon-config/blob/06ff4db98baa4e568db0f79f3de0c58a578535a2/reload/reload.lua][here]]:
+#+begin_src lua
+reloadConfig = {
+  watcher = {},
+}
+
+function reloadConfig.reloader(paths)
+  doReload = false
+  for _, file in pairs(paths) do
+    if file:sub(-4) == ".lua" then
+      print("A Lua configuration file has changed. Reloading...")
+      doReload = true
+    end
+  end
+  if not doReload then
+    print("No Lua configuration files have changed. Skipping reload...")
+    return
+  end
+  hs.reload()
+end
+#+end_src
+
+And then we register a path watcher, provide a method to stop the watcher, and
+then kick it off:
+#+begin_src lua
+hammerspoonDir = os.getenv("HOME") .. "/.hammerspoon/"
+
+function reloadConfig.init()
+  reloadConfig.watcher = hs.pathwatcher.new(hammerspoonDir, reloadConfig.reloader)
+end
+
+function reloadConfig.start()
+  reloadConfig.watcher:start()
+end
+
+function reloadConfig.stop()
+  reloadConfig.watcher:stop()
+end
+
+reloadConfig.init()
+reloadConfig.start()
+#+end_src
+
+*** Keybindings
 Next let's setup a few default key combos.
 #+begin_src lua
 local meh = {"ctrl", "alt", "shift"}
 local super = {"ctrl", "alt", "cmd"}
 local hyper = {"ctrl", "alt", "cmd", "shift"}
 #+end_src
-** Keybindings
-** Spoons
-These are the various spoons I'm using. Sadly, I am not sure the best way to
-clone repos in this literate config setup, so I'm just copy/pasting the spoons.
-Eventually I do hope to have a better way of doing this though.
-*** Edit With Emacs
+
+I'm lazy, so we're going to setup some abstraction over the default hammerspoon
+hotkey function so I have to type even less!
+#+begin_src lua
+function bk(...)
+  hs.hotkey.bind(...)
+end
+#+end_src
+
+**** yabai keybindings
+
+First, some abstraction to make calling into Yabai a bit simpler -- I stole this
+from [[https://github.com/rtauziac/Hammerspoon-Yabai/blob/4c1c130b089a3c8cc87a3f0dcf13ae0ae64b34a0/.hammerspoon/yabai.lua][here]]:
+#+begin_src lua
+function strToTable(str)
+  t = {}
+  for word in string.gmatch(str, "[^%s]+") do
+    table.insert(t, word)
+  end
+  return t
+end
+
+function runCmd(bin, strArgs)
+  args = strToTable(strArgs)
+  local t = hs.task.new(bin,
+                        function(err, stdout, stderr)
+                          print(err, stdout, stderr)
+                        end,
+                        function(task, stdout, stderr)
+                          print(stdout, stderr)
+                          return true
+                        end, args)
+  t:start()
+  if tOut then
+    print(tOut)
+  end
+  if tErr then
+    print(tErr)
+  end
+end
+
+function r(b, a)
+  return function() runCmd(b, a) end
+end
+
+function yabaiCmd(args)
+  yBin = "/usr/local/bin/yabai"
+  runCmd(yBin, args)
+end
+
+function y(a)
+  return function() yabaiCmd(a) end
+end
+#+end_src
+
+And now the hotkeys!
+
+Let's setup a reload hotkey for Yabai:
+#+begin_src lua
+-- bk(super, "r", "Yabai Reloaded", r("/bin/launchctl", {"kickstart", "-k", "gui/${UID}/homebrew.mxcl.yabai"}))
+bk(super, "r", "Yabai: Reloaded", r("/usr/local/bin/brew", "services restart yabai"))
+#+end_src
+
+Now some spaces related hotkeys!
+#+begin_src lua
+bk(super, "n", "Yabai: Created a new space", y("-m space --create"))
+#+end_src
+
+It'd be nice to be able to toggle the various layouts:
+#+begin_src lua
+bk(super, "s", "Yabai: Stacked Layout", y("-m space --layout stack"))
+bk(super, "b", "Yabai: BSP Layout", y("-m space --layout bsp"))
+bk(super, "f", "Yabai: Floating Layout", y("-m space --layout float"))
+#+end_src
+How about some stacking related one?!
+#+begin_src lua
+bk(super, "n", "Yabai: Window", y("-m space --create"))
+#+end_src
+*** Spoons
+**** Bootstrap
+***** spoonManager
+~spoonManager~ is a tool that lets us install Spoons from within Hammerspoon,
+which means we don't need to include the Spoon's source in our literate config!
+
+Let's create a table of spoons we want to manage. It's going to be empty for
+now, but entries should include a table name of the spoon and the git repo path of
+the spoon like such:
+#+begin_src lua :tangle no
+{
+  spoon = "spoon's name",
+  repo = "git repo",
+  path = "path relative to hammerspoon's dir", // this is an optional value and if it isn't provided, just install into the Spoons/ dir
+}
+#+end_src
+
+#+begin_src lua
+spoonList = {}
+<<stacklineSpoon>>
+<<editWithEmacsSpoon>>
+#+end_src
+
+And of course, let's create spoonManager and then kick off the install process
+#+begin_src lua
+spoonManager = {}
+
+function spoonManager:installMaybe()
+  if spoonList == nil then
+    return
+  end
+  for _, spoon in pairs(spoonList) do
+    install_path = "Spoons/" .. spoon.name .. ".spoon"
+    installed = nil
+    if spoon.path then
+      install_path = spoon.path
+      installed, _ = hs.fs.mkdir(spoon.path)
+      installed = not installed
+      if not installed then
+        hs.fs.rmdir(spoon.path)
+      end
+    else
+      installed = hs.spoons.isInstalled(spoon.name)
+    end
+    if not installed then
+      print("Installing " .. spoon.name .. " from repo: " .. spoon.repo)
+      hs.alert("Cloning " .. spoon.name .. " repo. This will just take a moment!")
+      reloadConfig.stop()
+      gitCloneTask =hs.task.new(
+        '/usr/bin/git',
+        function(_, _, _)
+          reloadConfig.start()
+        end,
+        {"clone", spoon.repo, install_path})
+      gitCloneTask:waitUntilExit()
+      gitCloneTask:start()
+    else
+      print(spoon.name .. " already installed!")
+    end
+  end
+end
+
+spoonManager.installMaybe()
+#+end_src
+
+**** stackline
+This spoon will help us visualize yabai's stacked windows
+#+name: stacklineSpoon
+#+begin_src lua :tangle no
+table.insert(spoonList, {
+               name = "stackline",
+               repo = "https://github.com/AdamWagner/stackline.git",
+               path = "stackline"
+})
+#+end_src
+
+Stackline isn't technically a spoon but that might be changing, and since I'd rather just pretend it is than write a special case in the ~spoonManager~ just for stackline, we're just gonna have to get a little hacky...
+#+begin_src lua
+sl = require('stackline')
+sl:init()
+#+end_src
+**** Edit With Emacs
 This spoon allows me to take any text area and edit that text area with emacs,
 and then send the text edited in Emacs back to that textbox when done. This
 spoon is from the GitHub user [[https://github.com/dmgerman/editWithEmacs.spoon/][dmgerman]].
-
-**** Load Spoon and Add Bindings
+#+name: editWithEmacsSpoon
+#+begin_src lua :tangle no
+table.insert(spoonList, {
+               name = "editWithEmacs",
+               repo = "https://github.com/dmgerman/editWithEmacs.spoon.git"})
+#+end_src
+***** Load Spoon and Add Bindings
 #+begin_src lua
 hs.loadSpoon("editWithEmacs")
 if spoon.editWithEmacs then
@@ -363,138 +572,6 @@ if spoon.editWithEmacs then
   spoon.editWithEmacs:bindHotkeys(bindings)
 end
 #+end_src
-**** Source
-
-***** Init.lua
-#+begin_src lua :tangle ~/.hammerspoon/Spoons/editWithEmacs.spoon/init.lua
----
-
-local obj={}
-
-obj.__index = obj
-
--- metadata for all spoons
-obj.name = "editWithEmacs"
-obj.version = "0.2"
-obj.author = "Daniel German <dmg@uvic.ca> and  Jeremy Friesen <emacs@jeremyfriesen.com>"
-obj.homepage = "https://github.com/dmgerman/editWithEmacs.spoon"
-obj.license = "MIT - https://opensource.org/licenses/MIT"
-
--- Additional local variables for managing the state of editing.
-
--- the current instance of Emacs
-obj.currentEmacs = nil
-
--- the current non-Emacs window from which we will begin editing
-obj.currentWindow = nil
-
--- The command to invoke
--- make it non-blocking
-obj.openEditorShellCommand = "emacsclient -e '(hammerspoon-edit-begin)' --create-frame -n"
-
--- The name of the Emacs application
-obj.emacsAppName = "Emacs"
-
-require ("hs.ipc")
-
-if not hs.ipc.cliStatus() then
-   hs.alert("hs is not installed.. Installing in default location /usr/local")
-   -- if this fails, try to install to a different location
-   -- e.g. hs.ipc.cliInstall('/Users/<yourusername>/bin') and
-   -- add the directory to your path
-   hs.ipc.cliInstall()
-   if not hs.ipc.cliStatus() then
-      hs.alert("Unable to install ipc module in /usr/local. editWithEmacs will not function.")
-      print("\n\neditWithEmacs: unable to install ipc module. You might have to do it manually. ",
-            "Make sure you can execute /usr/local/bin/hs from command line. See documentation of hs.ipc\n",
-            "For example: at /usr/local do\n",
-            "sudo ln -s /Applications/Hammerspoon.app/Contents/Frameworks/hs/hs .\n",
-            "\n")
-      return obj
-   end
-end
-
--- Open the editor and give it focus.
-function obj:openEditor()
-   if self.currentEmacs then
-      hs.execute(self.openEditorShellCommand, true)
-      self.currentEmacs:activate()
-   else
-      -- this should not be executed
-      hs.alert("No " .. self.emacsAppName .. " window found")
-   end
-end
-
--- Begin the edit with Emacs experience
-function obj:beginEditing(everything)
-   -- everything: if true, do the equivalent of Ctrl-A
-   ---            select everything
-   w = hs.window.focusedWindow()
-   if w:title():sub(1, 5) == self.emacsAppName then
-      hs.alert("🤔 already in " .. self.emacsAppName .. ". Ignoring request")
-      return
-   end
-   self.currentEmacs = hs.application.find(self.emacsAppName)
-
-   if not self.currentEmacs then
-      hs.alert("No " .. self.emacsAppName .. " window found. Ignoring request")
-      return
-   end
-
-   self.currentWindow = w
-
-   -- use the selection as the text to send to emacs
-   -- we use the clipboard to communicate both ways with emacs...
-   -- there could be other ways, but this is simple and effective
-   if everything then
-      -- this basically says, ignore current selection and select current text
-      hs.eventtap.keyStroke({"cmd"}, "a")
-      -- copy selection into the clipboard
-      hs.eventtap.keyStroke({"cmd"}, "c")
-   else
-      -- otherwise we have to cut,
-      hs.eventtap.keyStroke({"cmd"}, "x")
-   end
-
-   hs.notify.new({title=w:application():title(), informativeText="«" .. w:title() .. "»", subTitle="Editing in " .. self.emacsAppName}):send()
-   self:openEditor()
-end
-
-function obj:bindHotkeys(mapping)
-   local def = {
-      edit_selection = function() self:beginEditing(false) end,
-      edit_all       = function() self:beginEditing(true) end
-   }
-   hs.spoons.bindHotkeysToSpec(def, mapping)
-end
-
-function obj:endEditing(everything)
-   -- the text is in the clipboard
-   -- enable the original window and see what happens
-   -- this is usually run by emacs using hs
-
-   print(self.emacsAppName .. " is sending back the text")
-
-   if not self.currentWindow then
-      hs.alert("No current window active")
-   else
-      if (self.currentWindow:focus()) then
-         if everything then
-            hs.eventtap.keyStroke({"cmd"}, "a")
-         end
-         hs.eventtap.keyStroke({"cmd"}, "v")
-      else
-         hs.alert("Window to send back text does not exist any more")
-      end
-   end
-
-end
-
-print("Finished loading editWithEmacs.spoon" )
-
-return obj
-#+end_src
-
 ***** hammerspoon.el
 For this to work we need to load some elisp with ~(load
 "~/.hammerspoon/Spoons/editWithEmacs.spoon/hammerspoon.el")~. Make sure to put
@@ -615,7 +692,7 @@ If you see a message, Hammerspoon is working correctly."
     (exchange-point-and-mark)))
 #+end_src
 
-* isync/mbsync
+** isync/mbsync
 :PROPERTIES:
 :header-args: :tangle ~/.config/isync/mbsyncrc :comments link :mkdirp yes :padline no :noweb tangle :cache yes
 :END:
@@ -624,7 +701,7 @@ applicable.
 #+begin_src sh :comments no
 <<boilerplate-file-header>>
 #+end_src
-** Personal Protonmail Accounts
+*** Personal Protonmail Accounts
 I have a number of protonmail accounts. They have virtually the same settings,
 even the same password. I am not using the password store for the Proton email
 accounts because this password is only applicable to the Proton bridge on my
@@ -637,9 +714,9 @@ empty line at the end of each config. ~org-tangle~ removes trailing whitespace,
 so this means we need to add a new line and then an empty comment. There might
 be a better way to do this but I am unaware of it.
 
-*** TODO Make this programmatic, so it just needs a list of email addresses
+**** TODO Make this programmatic, so it just needs a list of email addresses
 
-*** ipringle@protonmail.com
+**** ipringle@protonmail.com
 #+begin_src sh
 IMAPAccount ipringle-protonmail
 Host 127.0.0.1
@@ -667,7 +744,7 @@ SyncState *
 
 #
 #+end_src
-*** ian@dapringles.com
+**** ian@dapringles.com
 #+begin_src sh
 IMAPAccount ian-dapringles
 Host 127.0.0.1
@@ -695,7 +772,7 @@ SyncState *
 
 #
 #+end_src
-*** pard@0x44.pw
+**** pard@0x44.pw
 #+begin_src sh
 IMAPAccount pard-0x44
 Host 127.0.0.1
@@ -723,7 +800,7 @@ SyncState *
 
 #
 #+end_src
-** Work Gmail
+*** Work Gmail
 This is my config for my work gmail account. I'm not tangling this because using
 Gmail with mbsync/mu4e is super annoying and I cannot get sending to work for
 some reason. Plus we're migrating /away/ from Gmail so it's less important.
@@ -756,7 +833,7 @@ SyncState *
 #
 #+end_src
 
-** Work Outlook
+*** Work Outlook
 Nothing fancy here, should be noted that the password is an app-password because
 of 2fa requirements.
 #+begin_src sh
@@ -788,7 +865,122 @@ SyncState *
 
 #
 #+end_src
-* yabai
+** yabai
+:PROPERTIES:
+:header-args: :tangle ~/.config/yabai/yabairc :comments link :mkdirp yes :padline no :noweb tangle :cache yes :tangle-mode (identity #o755)
+:END:
+
+*** Boilerplate
+#+begin_src shell :comments no
+#!/usr/bin/env sh
+<<boilerplate-file-header>>
+#+end_src
+
+Let's make sure yabai is auto-loading the scripting additions on start -- this
+requires that we can run ~sudo yabai~ commands without a password.
+#+begin_src shell
+yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
+#+end_src
+
+*** Config
+**** Defaults
+We're going to just leave the mouse totally out of the picture:
+#+begin_src shell
+# global settings
+yabai -m config mouse_follows_focus          off
+yabai -m config focus_follows_mouse          off
+#+end_src
+
+And let's make new windows spawn to the right and to the bottom:
+#+begin_src shell
+yabai -m config window_placement             second_child
+#+end_src
+
+Let's make sure floating windows can be sent to the back -- this is the default,
+but it's here for clarity:
+#+begin_src shell
+yabai -m config window_topmost               off
+#+end_src
+
+Just because the window is inactive doesn't mean it shouldn't be easily visible,
+so we'll turn off opacity and also add a little shadow for depth:
+#+begin_src shell
+yabai -m config window_opacity               off
+yabai -m config window_opacity_duration      0.0
+yabai -m config window_shadow                on
+#+end_src
+
+Window equity now!
+#+begin_src shell
+yabai -m config split_ratio                  0.50
+yabai -m config auto_balance                 off
+#+end_src
+
+Just in case we break down and use a mouse...
+#+begin_src shell
+yabai -m config mouse_modifier               alt
+yabai -m config mouse_action1                move
+yabai -m config mouse_action2                resize
+#+end_src
+
+The default layout:
+#+begin_src shell
+yabai -m config layout                       bsp
+#+end_src
+
+#+begin_src shell
+# SPACEBAR_HEIGHT=$(spacebar -m config height)
+# yabai -m config external_bar all:$SPACEBAR_HEIGHT:0
+#+end_src
+
+These are the things we always want to float:
+#+begin_src shell
+yabai -m rule --add app='^System Information$' manage=off
+yabai -m rule --add app='^System Preferences$' manage=off
+yabai -m rule --add title='Preferences$' manage=off
+yabai -m rule --add title='Settings$' manage=off
+#+end_src
+
+FIN
+#+begin_src shell
+echo "yabai configuration loaded.."
+#+end_src
+
+**** Stacked Spaces
+When a space is stacked, these rules apply -- to make it work nicely with
+stackline
+#+begin_src shell
+yabai -m signal --add event=window_created action="~/.config/yabai/refresh.sh"
+yabai -m signal --add event=window_destroyed action="~/.config/yabai/refresh.sh"
+#+end_src
+
+And of course ~refresh.sh~, which I stole from these two lovely [[https://github.com/AdamWagner/stackline/issues/57#issuecomment-766596737][comm]]-[[https://github.com/AdamWagner/stackline/issues/57#issuecomment-873378890][ents]]:
+#+begin_src shell :tangle ~/.config/yabai/refresh.sh :comments link :mkdirp yes :padline no :noweb tangle :cache yes :tangle-mode (identity #o755)
+#!/usr/bin/env bash
+
+number_of_windows=$(yabai -m query --windows --space | /usr/local/bin/jq 'length')
+number_of_stacked=$(yabai -m query --windows --space | /usr/local/bin/jq -c 'map(select(."stack-index" != 0)) | length')
+currspace=$(yabai -m query --spaces --space | /usr/local/bin/jq '.index')
+
+padding=8
+spadding=40
+
+[[ "$number_of_windows" -eq 1 ]] && padding=0
+[[ "$number_of_stacked" = 0 ]] && spadding=$padding
+
+yabai -m config --space "$currspace" top_padding $padding
+yabai -m config --space "$currspace" bottom_padding $padding
+yabai -m config --space "$currspace" left_padding $spadding
+yabai -m config --space "$currspace" right_padding $spadding
+yabai -m config --space "$currspace" window_gap $padding
+#+end_src
+**** Spaces
+***** Comms Space
+This is the space for my communication apps, namely Slack, Teams, Signal, and Discord
+#+begin_src shell
+
+#+end_src
+*** Yabai Utils
 * License
 
 #+BEGIN_SRC :tangle no
