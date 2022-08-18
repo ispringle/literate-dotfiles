@@ -321,7 +321,7 @@ color15 #888F94
 #+begin_src lua :comments no
 --[[
 <<boilerplate-file-header>>
-]]
+--]]
 #+end_src
 
 I really only want Hammerspoon around on Mac, but I'm not currently sure how to
