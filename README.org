@@ -1,4 +1,6 @@
 #+title: Literate Dotfiles
+#+STARTUP: hideblocks
+
 
 These are my /literate/ dotfiles. To compile and deploy these files you need to
 run ~(org-bable-tangle)~. There are no additional settings that are needed to
@@ -401,6 +403,21 @@ function bk(...)
 end
 #+end_src
 
+**** Toggle Dark Mode
+It'd be nice to toggle the system dark-mode with a key. But to do that we need to write a little applescript first:
+#+begin_src sh :tangle ~/.hammerspoon/applescripts/toggle-dark-mode.applescript :comments no
+tell application "System Events"
+	tell appearance preferences
+		set dark mode to not dark mode
+	end tell
+end tell
+#+end_src
+
+Great, and now for the keybinding:
+#+begin_src lua
+bk(hyper, "d", "Toggle: Dark-mode", function() hs.osascript.applescriptFromFile("applescripts/toggle-dark-mode.applescript") end)
+#+end_src
+
 **** yabai keybindings
 
 First, some abstraction to make calling into Yabai a bit simpler -- I stole this
@@ -476,19 +493,30 @@ bk(super, "n", "Yabai: Window", y("-m space --create"))
 ~spoonManager~ is a tool that lets us install Spoons from within Hammerspoon,
 which means we don't need to include the Spoon's source in our literate config!
 
+I was using this to install all spoons but then I noticed that HS has a Spoon
+for installing spoons and it's a bit more feature-complete than SpoonManager, so
+I'm just using this to install dependencies that SpoonInstall doesn't like (ie
+stackline) and SpoonInstall itself and then we'll let everything else use
+SpoonInstall.
+
 Let's create a table of spoons we want to manage. It's going to be empty for
-now, but entries should include a table name of the spoon and the git repo path of
-the spoon like such:
+now, but entries should include a table name of the spoon and the git repo or
+zip path of the spoon like such:
 #+begin_src lua :tangle no
 {
-  spoon = "spoon's name",
-  repo = "git repo",
+  name = "spoon's name",
+  uri = "git repo",
   path = "path relative to hammerspoon's dir", // this is an optional value and if it isn't provided, just install into the Spoons/ dir
 }
 #+end_src
 
 #+begin_src lua
-spoonList = {}
+spoonList = {
+  {
+    name = "SpoonInstall",
+    uri = "https://github.com/Hammerspoon/Spoons/raw/master/Spoons/SpoonInstall.spoon.zip"
+  }
+}
 <<stacklineSpoon>>
 <<editWithEmacsSpoon>>
 #+end_src
@@ -497,7 +525,29 @@ And of course, let's create spoonManager and then kick off the install process
 #+begin_src lua
 spoonManager = {}
 
-function spoonManager:installMaybe()
+<<spoonManagerInstallZip>>
+
+function spoonManager.installGit(spoon)
+  gitCloneTask =hs.task.new('/usr/bin/git', function(a,b,c) return end, {"clone", spoon.uri, spoon.path})
+  gitCloneTask:waitUntilExit()
+  gitCloneTask:start()
+end
+
+function spoonManager.install(spoon)
+  ext = string.sub(spoon.uri, -4)
+  reloadConfig.stop()
+  if ext == ".git" then
+    spoonManager.installGit(spoon)
+  end
+  if ext == ".zip" then
+    spoonManager.installZip(spoon)
+  else
+    print("Unknown file type, not installing " .. spoon.name)
+  end
+  reloadConfig.start()
+end
+
+function spoonManager.installMaybe()
   if spoonList == nil then
     return
   end
@@ -514,18 +564,11 @@ function spoonManager:installMaybe()
     else
       installed = hs.spoons.isInstalled(spoon.name)
     end
+    spoon.path = install_path
     if not installed then
-      print("Installing " .. spoon.name .. " from repo: " .. spoon.repo)
-      hs.alert("Cloning " .. spoon.name .. " repo. This will just take a moment!")
-      reloadConfig.stop()
-      gitCloneTask =hs.task.new(
-        '/usr/bin/git',
-        function(_, _, _)
-          reloadConfig.start()
-        end,
-        {"clone", spoon.repo, install_path})
-      gitCloneTask:waitUntilExit()
-      gitCloneTask:start()
+      print("Installing " .. spoon.name .. " from uri: " .. spoon.uri)
+      hs.alert("Install " .. spoon.name .. ". This will just take a moment!")
+      spoonManager.install(spoon)
     else
       print(spoon.name .. " already installed!")
     end
@@ -535,13 +578,115 @@ end
 spoonManager.installMaybe()
 #+end_src
 
+This part of spoonManager is not my work, I took it from the SpoonInstall [[https://github.com/Hammerspoon/Spoons/blob/master/Source/SpoonInstall.spoon/init.lua][source]]
+and I took it mostly to /install/ SpoonInstall, since it's part of a monorepo
+and I'd rather steal their function for installing something from a zip than try
+to figure out the best to do sparse git stuff.
+#+name: spoonManagerInstallZip
+#+begin_src lua :tangle no
+-- Execute a command and return its output with trailing EOLs trimmed. If the command fails, an error message is logged.
+function spoonManager.x(cmd, errfmt, ...)
+   local output, status = hs.execute(cmd)
+   if status then
+      local trimstr = string.gsub(output, "\n*$", "")
+      return trimstr
+   else
+      return nil
+   end
+end
+
+function spoonManager._installSpoonFromZipURL(urlparts, status, body, headers)
+   local success=nil
+   if (status < 100) or (status >= 400) then
+      print("Error downloading %s. Error code %d: %s", urlparts.absoluteString, status, body or "<none>")
+   else
+      -- Write the zip file to disk in a temporary directory
+      local tmpdir=spoonManager.x("/usr/bin/mktemp -d", "Error creating temporary directory to download new spoon.")
+      if tmpdir then
+         local outfile = string.format("%s/%s", tmpdir, urlparts.lastPathComponent)
+         local f=assert(io.open(outfile, "w"))
+         f:write(body)
+         f:close()
+
+         -- Check its contents - only one *.spoon directory should be in there
+         output = spoonManager.x(string.format("/usr/bin/unzip -l %s '*.spoon/' | /usr/bin/awk '$NF ~ /\\.spoon\\/$/ { print $NF }' | /usr/bin/wc -l", outfile),
+                     "Error examining downloaded zip file %s, leaving it in place for your examination.", outfile)
+         if output then
+            if (tonumber(output) or 0) == 1 then
+               -- Uncompress the zip file
+               local outdir = string.format("%s/Spoons", hs.configdir)
+               if spoonManager.x(string.format("/usr/bin/unzip -o %s -d %s 2>&1", outfile, outdir),
+                     "Error uncompressing file %s, leaving it in place for your examination.", outfile) then
+                  -- And finally, install it using Hammerspoon itself
+                  print("Downloaded and installed %s", urlparts.absoluteString)
+                  spoonManager.x(string.format("/bin/rm -rf '%s'", tmpdir), "Error removing directory %s", tmpdir)
+                  success=true
+               end
+            else
+               print("The downloaded zip file %s is invalid - it should contain exactly one spoon. Leaving it in place for your examination.", outfile)
+            end
+         end
+      end
+   end
+   return success
+end
+
+function spoonManager.installSpoonFromZipURL(url)
+   local urlparts = hs.http.urlParts(url)
+   local dlfile = urlparts.lastPathComponent
+   if dlfile and dlfile ~= "" and urlparts.pathExtension == "zip" then
+      a,b,c=hs.http.get(url)
+      return spoonManager._installSpoonFromZipURL(urlparts, a, b, c)
+   else
+      print("Invalid URL %s, must point to a zip file", url)
+      return nil
+   end
+end
+
+function spoonManager.installZip(spoon)
+  spoonManager.installSpoonFromZipURL(spoon.uri)
+end
+#+end_src
+
+***** SpoonInstall
+SpoonInstall is how we're going to install 99% of spoons, because it's a lot
+better than ~spoonManager~.
+
+First let's setup some stuff:
+#+begin_src lua
+hs.loadSpoon('SpoonInstall')
+#+end_src
+
+This will block HS, but I think it's worth it...
+#+begin_src lua
+spoon.SpoonInstall.use_syncinstall = true
+#+end_src
+
+I'm lazy...
+#+begin_src lua
+Install = spoon.SpoonInstall
+#+end_src
+**** Clipboard Tool
+It's a clipboard manager for text.
+#+begin_src lua
+Install:andUse("ClipboardTool", {})
+clt = spoon.ClipboardTool
+clt.pase_on_select = true
+clt.show_in_menubar = false
+clt.max_size = true
+clt.max_entry_size = 4990
+clt.clearAll()
+clt.frequency = 2
+bk(hyper, "v", "Toggle: Clipboard", function() clt:toggleClipboard() end)
+clt:start()
+#+end_src
 **** stackline
 This spoon will help us visualize yabai's stacked windows
 #+name: stacklineSpoon
 #+begin_src lua :tangle no
 table.insert(spoonList, {
                name = "stackline",
-               repo = "https://github.com/AdamWagner/stackline.git",
+               uri = "git@github.com:pard68/stackline.git",
                path = "stackline"
 })
 #+end_src
@@ -550,6 +695,28 @@ Stackline isn't technically a spoon but that might be changing, and since I'd ra
 #+begin_src lua
 sl = require('stackline')
 sl:init()
+#+end_src
+
+We also need to add the following to the yabai config so that stackline redraws
+can be triggered with yabai signals to speed up the drawing process. These
+signals came from the these two issues in the stackline repo; "[[https://github.com/AdamWagner/stackline/issues/110][Trigger refreshes
+using yabail -m signal]]" and "[[https://github.com/AdamWagner/stackline/issues/113][Reduce redraw lag when switched spaces]]"
+#+begin_src shell :tangle ~/.config/yabai/yabairc
+yabai -m signal --add event=space_changed action="hs -c 'stackline.manager:update({forceRedraw = true})'"
+yabai -m signal --add event=display_added action="hs -c 'stackline.refresh()"
+yabai -m signal --add event=display_removed action="hs -c 'stackline.refresh()"
+yabai -m signal --add event=display_changed action="hs -c 'stackline.refresh()"
+yabai -m signal --add event=space_changed action="hs -c 'stackline.refresh()"
+yabai -m signal --add event=application_visible action="hs -c 'stackline.refresh()"
+yabai -m signal --add event=application_hidden action="hs -c 'stackline.refresh()"
+yabai -m signal --add event=window_created action="hs -c 'stackline.refresh()"
+yabai -m signal --add event=window_destroyed action="hs -c 'stackline.refresh()"
+#+end_src
+
+These two lines help with some issues when you switch focus with yabai commands. I found them in this [[https://github.com/AdamWagner/stackline/issues/67#issuecomment-1193396400][issue comment]].
+#+begin_src shell :tangle ~/.config/yabai/yabairc
+yabai -m signal --add event=window_created title="Hammerspoon Console" action="yabai -m window \$(yabai -m query --windows | jq '.[] | select(.app==\"Hammerspoon\" and .name==\"Hammerspoon Console\") | .id') --minimize"
+yabai -m rule --add app="Hammerspoon" title="" manage=on layer="above" sticky=on
 #+end_src
 ***** Keybindings
 These some bindings someone created to use the same keys for cycling yabai
@@ -567,7 +734,7 @@ spoon is from the GitHub user [[https://github.com/dmgerman/editWithEmacs.spoon/
 #+begin_src lua :tangle no
 table.insert(spoonList, {
                name = "editWithEmacs",
-               repo = "https://github.com/dmgerman/editWithEmacs.spoon.git"})
+               uri = "https://github.com/dmgerman/editWithEmacs.spoon.git"})
 #+end_src
 ***** Load Spoon and Add Bindings
 #+begin_src lua
@@ -899,36 +1066,11 @@ yabai -m config mouse_follows_focus          off
 yabai -m config focus_follows_mouse          off
 #+end_src
 
-And let's make new windows spawn to the right and to the bottom:
+And let's make new windows spawn to the left so that they don't take over the
+master window and to the bottom:
 #+begin_src shell
-yabai -m config window_placement             second_child
-#+end_src
-
-Let's make sure floating windows can be sent to the back -- this is the default,
-but it's here for clarity:
-#+begin_src shell
+yabai -m config window_placement             first_child
 yabai -m config window_topmost               off
-#+end_src
-
-Just because the window is inactive doesn't mean it shouldn't be easily visible,
-so we'll turn off opacity and also add a little shadow for depth:
-#+begin_src shell
-yabai -m config window_opacity               off
-yabai -m config window_opacity_duration      0.0
-yabai -m config window_shadow                on
-#+end_src
-
-Window equity now!
-#+begin_src shell
-yabai -m config split_ratio                  0.50
-yabai -m config auto_balance                 off
-#+end_src
-
-Just in case we break down and use a mouse...
-#+begin_src shell
-yabai -m config mouse_modifier               alt
-yabai -m config mouse_action1                move
-yabai -m config mouse_action2                resize
 #+end_src
 
 The default layout:
@@ -936,9 +1078,10 @@ The default layout:
 yabai -m config layout                       bsp
 #+end_src
 
+Let's make room for the bar.
 #+begin_src shell
-# SPACEBAR_HEIGHT=$(spacebar -m config height)
-# yabai -m config external_bar all:$SPACEBAR_HEIGHT:0
+BAR_HEIGHT=$(sketchybar --query bar | jq ."height")
+yabai -m config external_bar all:$BAR_HEIGHT:0
 #+end_src
 
 These are the things we always want to float:
@@ -954,7 +1097,10 @@ FIN
 echo "yabai configuration loaded.."
 #+end_src
 
-**** Stacked Spaces
+**** Layouts
+***** BSP
+***** Float
+***** Stacked
 When a space is stacked, these rules apply -- to make it work nicely with
 stackline
 #+begin_src shell
@@ -970,7 +1116,7 @@ number_of_windows=$(yabai -m query --windows --space | /usr/local/bin/jq 'length
 number_of_stacked=$(yabai -m query --windows --space | /usr/local/bin/jq -c 'map(select(."stack-index" != 0)) | length')
 currspace=$(yabai -m query --spaces --space | /usr/local/bin/jq '.index')
 
-padding=8
+padding=0
 spadding=40
 
 [[ "$number_of_windows" -eq 1 ]] && padding=0
@@ -979,16 +1125,122 @@ spadding=40
 yabai -m config --space "$currspace" top_padding $padding
 yabai -m config --space "$currspace" bottom_padding $padding
 yabai -m config --space "$currspace" left_padding $spadding
-yabai -m config --space "$currspace" right_padding $spadding
+yabai -m config --space "$currspace" right_padding $padding
 yabai -m config --space "$currspace" window_gap $padding
 #+end_src
-**** Spaces
+**** Named Spaces
 ***** Comms Space
 This is the space for my communication apps, namely Slack, Teams, Signal, and Discord
 #+begin_src shell
 
 #+end_src
 *** Yabai Utils
+**** ymsp
+The Yabai Master-stack Plugin is a tool that takes the BSP mode of Yabai and instead switches Yabai to a master-stack layout like in dwm. This means there is one main window which takes up the majority of the screen and then the remaining windows take up an equal portion of the remaining portion of the screen. To use ymsp we need to install it from npm:
+#+begin_src shell :tangle no
+npm install --global yabai-master-stack-plugin
+#+end_src
+
+And then add the following config settings for ymsp:
+#+begin_src json :tangle ~/.config/ymsp/ymsp.config.json :comments no :mkdirp yes :padline no :cache yes
+{
+  "yabaiPath": "/usr/local/bin/yabai"
+}
+#+end_src
+
+Finally to connect ymsp to yabai we need to add the following signals:
+#+begin_src shell
+yabai -m signal --add event=window_created action='ymsp window-created'
+yabai -m signal --add event=application_launched action='ymsp window-created'
+yabai -m signal --add event=window_moved action='ymsp window-moved'
+ymsp on-yabai-start
+#+end_src
+** sketchybar
+:PROPERTIES:
+:header-args: :tangle ~/.config/sketchybar/sketchybarrc :comments link :mkdirp yes :padline no :noweb tangle :cache yes :tangle-mode (identity #o755)
+:END:
+
+*** Boilerplate
+#+begin_src shell :comments no
+#!/usr/bin/env sh
+<<boilerplate-file-header>>
+#+end_src
+
+We'll add some signals to yabai so it can trigger sketchybar events
+#+begin_src shell :tangle ~/.config/yabai/yabairc
+yabai -m signal --add event=window_created action="sketchybar -m --trigger yabai_window &> /dev/null"
+yabai -m signal --add event=window_destroyed action="sketchybar -m --trigger yabai_window &> /dev/null"
+yabai -m signal --add event=window_focused action="sketchybar -m --trigger yabai_window &> /dev/null"
+yabai -m signal --add event=space_changed action="sketchybar -m --trigger yabai_window &> /dev/null"
+yabai -m signal --add event=window_title_changed action="sketchybar -m --trigger yabai_window &> /dev/null"
+#+end_src
+*** Config
+**** Defaults
+#+begin_src shell
+sketchybar --bar color=0xff366000a36
+sketchybar --bar height=26
+sketchybar --bar blur_radius=100
+sketchybar --bar shadow=on
+sketchybar -m --add event yabai_window
+#+end_src
+**** Clock
+
+We can add the time:
+#+begin_src shell
+sketchybar --add item time right
+sketchybar --set time script='sketchybar --set time label="$(date "+%I:%M%p")"'
+sketchybar --set time label.padding_left=20
+sketchybar --set time update_freq=2
+#+end_src
+
+And let's not forget the date:
+#+begin_src shell
+sketchybar --add item date right
+sketchybar --set date script='sketchybar --set date label="$(date "+%y/%d/%m (%a)")"'
+sketchybar --set date update_freq=4
+#+end_src
+**** Active Window Title
+This will show the title of the currently active window in the middle of the
+bar. I stole it from [[https://github.com/oatmeaI/dotfiles/blob/8a10e48798a9711574e4c16f05d11e1ed6866769/.config/sketchybar/sketchybarrc][here]].
+#+begin_src shell
+TITLE_SCRIPT='
+WINDOW_TITLE=$(/usr/local/bin/yabai -m query --windows --window | jq -r ".title")
+if [[ ${#WINDOW_TITLE} -gt 150 ]]; then
+  WINDOW_TITLE=$(echo "$WINDOW_TITLE" | cut -c 1-150)
+  sketchybar -m --set window label="$WINDOW_TITLE"…
+  exit 0
+fi
+
+APP_TITLE=$(/usr/local/bin/yabai -m query --windows --window | jq -r ".app")
+if [[ $WINDOW_TITLE = "" ]]; then
+    if [[ $APP_TITLE = "" ]]; then
+        TITLE=""
+    else
+        TITLE="${APP_TITLE}"
+    fi
+else
+    CLEANED_WIN_TITLE=${WINDOW_TITLE//$APP_TITLE | /}
+    CLEANED_WIN_TITLE=${CLEANED_WIN_TITLE// | $APP_TITLE/}
+    CLEANED_WIN_TITLE=${CLEANED_WIN_TITLE//$APP_TITLE - /}
+    CLEANED_WIN_TITLE=${CLEANED_WIN_TITLE//$APP_TITLE – /}
+    CLEANED_WIN_TITLE=${CLEANED_WIN_TITLE// – $APP_TITLE/}
+    CLEANED_WIN_TITLE=${CLEANED_WIN_TITLE// - $APP_TITLE/}
+    if [[ $APP_TITLE = $CLEANED_WIN_TITLE ]]; then
+        TITLE="${APP_TITLE}"
+    else
+        TITLE="${APP_TITLE} | ${CLEANED_WIN_TITLE}"
+    fi
+fi
+sketchybar -m --set window label="$TITLE"
+'
+
+sketchybar --add item window center
+sketchybar --set window label.font="FiraCode Nerd Font Mono:Medium:12.0"
+sketchybar --set window script="$TITLE_SCRIPT"
+sketchybar --subscribe window yabai_window
+$($TITLE_SCRIPT)
+#+end_src
+
 * License
 
 #+BEGIN_SRC :tangle no
