@@ -1,5 +1,10 @@
+:PROPERTIES:
+:MODIFIED: <2022-08-20 Sat 06:43>
+:END:
 #+title: Literate Dotfiles
-#+STARTUP: hideblocks
+#+html_head: <link rel='shortcut icon' type='image/png' href='https://www.gnu.org/software/emacs/favicon.png'>
+#+startup: hideblocks
+#+startup: fold
 
 
 These are my /literate/ dotfiles. To compile and deploy these files you need to
@@ -403,25 +408,9 @@ function bk(...)
 end
 #+end_src
 
-**** Toggle Dark Mode
-It'd be nice to toggle the system dark-mode with a key. But to do that we need to write a little applescript first:
-#+begin_src sh :tangle ~/.hammerspoon/applescripts/toggle-dark-mode.applescript :comments no
-tell application "System Events"
-	tell appearance preferences
-		set dark mode to not dark mode
-	end tell
-end tell
-#+end_src
-
-Great, and now for the keybinding:
-#+begin_src lua
-bk(hyper, "d", "Toggle: Dark-mode", function() hs.osascript.applescriptFromFile("applescripts/toggle-dark-mode.applescript") end)
-#+end_src
-
-**** yabai keybindings
-
-First, some abstraction to make calling into Yabai a bit simpler -- I stole this
-from [[https://github.com/rtauziac/Hammerspoon-Yabai/blob/4c1c130b089a3c8cc87a3f0dcf13ae0ae64b34a0/.hammerspoon/yabai.lua][here]]:
+Since a lot of keybindings are going to be related to running external commands,
+we should setup some abstraction to make interacting with HS' api for running
+external commands a bit easier -- my inspiration for this from [[https://github.com/rtauziac/Hammerspoon-Yabai/blob/4c1c130b089a3c8cc87a3f0dcf13ae0ae64b34a0/.hammerspoon/yabai.lua][here]]:
 #+begin_src lua
 function strToTable(str)
   t = {}
@@ -453,40 +442,22 @@ end
 function r(b, a)
   return function() runCmd(b, a) end
 end
-
-function yabaiCmd(args)
-  yBin = "/usr/local/bin/yabai"
-  runCmd(yBin, args)
-end
-
-function y(a)
-  return function() yabaiCmd(a) end
-end
+#+end_src
+**** Toggle Dark Mode
+It'd be nice to toggle the system dark-mode with a key. But to do that we need to write a little applescript first:
+#+begin_src sh :tangle ~/.hammerspoon/applescripts/toggle-dark-mode.applescript :comments no
+tell application "System Events"
+	tell appearance preferences
+		set dark mode to not dark mode
+	end tell
+end tell
 #+end_src
 
-And now the hotkeys!
-
-Let's setup a reload hotkey for Yabai:
+Great, and now for the keybinding:
 #+begin_src lua
--- bk(super, "r", "Yabai Reloaded", r("/bin/launchctl", {"kickstart", "-k", "gui/${UID}/homebrew.mxcl.yabai"}))
-bk(super, "r", "Yabai: Reloaded", r("/usr/local/bin/brew", "services restart yabai"))
+bk(hyper, "d", "Toggle: Dark-mode", function() hs.osascript.applescriptFromFile("applescripts/toggle-dark-mode.applescript") end)
 #+end_src
 
-Now some spaces related hotkeys!
-#+begin_src lua
-bk(super, "n", "Yabai: Created a new space", y("-m space --create"))
-#+end_src
-
-It'd be nice to be able to toggle the various layouts:
-#+begin_src lua
-bk(super, "s", "Yabai: Stacked Layout", y("-m space --layout stack"))
-bk(super, "b", "Yabai: BSP Layout", y("-m space --layout bsp"))
-bk(super, "f", "Yabai: Floating Layout", y("-m space --layout float"))
-#+end_src
-How about some stacking related one?!
-#+begin_src lua
-bk(super, "n", "Yabai: Window", y("-m space --create"))
-#+end_src
 *** Spoons
 **** Bootstrap
 ***** spoonManager
@@ -518,6 +489,7 @@ spoonList = {
   }
 }
 <<stacklineSpoon>>
+<<VimModeSpoon>>
 <<editWithEmacsSpoon>>
 #+end_src
 
@@ -666,65 +638,51 @@ I'm lazy...
 #+begin_src lua
 Install = spoon.SpoonInstall
 #+end_src
+**** Color Picker
+This is a tool to help manage picking colors and selecting their value
+#+begin_src lua
+Install:andUse("ColorPicker", {
+                 hotkeys = {
+                   show = { hyper, "c" }
+                 },
+                 config = {
+                   show_in_menubar = false,
+                 },
+                 start = true,
+})
+#+end_src
 **** Clipboard Tool
 It's a clipboard manager for text.
 #+begin_src lua
-Install:andUse("ClipboardTool", {})
-clt = spoon.ClipboardTool
-clt.pase_on_select = true
-clt.show_in_menubar = false
-clt.max_size = true
-clt.max_entry_size = 4990
-clt.clearAll()
-clt.frequency = 2
-bk(hyper, "v", "Toggle: Clipboard", function() clt:toggleClipboard() end)
-clt:start()
+Install:andUse("ClipboardTool", {
+                 config = {
+                    pase_on_select = true,
+                    show_copied_alert = false,
+                    show_in_menubar = false,
+                 },
+                 hotkeys = {
+                   toggle_clipboard = { hyper, "v" }
+
+                 },
+                 start = true,
+})
 #+end_src
-**** stackline
-This spoon will help us visualize yabai's stacked windows
-#+name: stacklineSpoon
-#+begin_src lua :tangle no
+**** Vim Mode
+This spoon lets you have vim style movement in all the places!
+#+name: VimModeSpoon
+#+begin_src lua
 table.insert(spoonList, {
-               name = "stackline",
-               uri = "git@github.com:pard68/stackline.git",
-               path = "stackline"
+               name = "VimMode",
+               uri = "https://github.com/dbalatero/VimMode.spoon.git",
+               path = "Spoons/VimMode.spoon"
 })
 #+end_src
 
-Stackline isn't technically a spoon but that might be changing, and since I'd rather just pretend it is than write a special case in the ~spoonManager~ just for stackline, we're just gonna have to get a little hacky...
+The settings are pretty straightforward...
 #+begin_src lua
-sl = require('stackline')
-sl:init()
-#+end_src
-
-We also need to add the following to the yabai config so that stackline redraws
-can be triggered with yabai signals to speed up the drawing process. These
-signals came from the these two issues in the stackline repo; "[[https://github.com/AdamWagner/stackline/issues/110][Trigger refreshes
-using yabail -m signal]]" and "[[https://github.com/AdamWagner/stackline/issues/113][Reduce redraw lag when switched spaces]]"
-#+begin_src shell :tangle ~/.config/yabai/yabairc
-yabai -m signal --add event=space_changed action="hs -c 'stackline.manager:update({forceRedraw = true})'"
-yabai -m signal --add event=display_added action="hs -c 'stackline.refresh()"
-yabai -m signal --add event=display_removed action="hs -c 'stackline.refresh()"
-yabai -m signal --add event=display_changed action="hs -c 'stackline.refresh()"
-yabai -m signal --add event=space_changed action="hs -c 'stackline.refresh()"
-yabai -m signal --add event=application_visible action="hs -c 'stackline.refresh()"
-yabai -m signal --add event=application_hidden action="hs -c 'stackline.refresh()"
-yabai -m signal --add event=window_created action="hs -c 'stackline.refresh()"
-yabai -m signal --add event=window_destroyed action="hs -c 'stackline.refresh()"
-#+end_src
-
-These two lines help with some issues when you switch focus with yabai commands. I found them in this [[https://github.com/AdamWagner/stackline/issues/67#issuecomment-1193396400][issue comment]].
-#+begin_src shell :tangle ~/.config/yabai/yabairc
-yabai -m signal --add event=window_created title="Hammerspoon Console" action="yabai -m window \$(yabai -m query --windows | jq '.[] | select(.app==\"Hammerspoon\" and .name==\"Hammerspoon Console\") | .id') --minimize"
-yabai -m rule --add app="Hammerspoon" title="" manage=on layer="above" sticky=on
-#+end_src
-***** Keybindings
-These some bindings someone created to use the same keys for cycling yabai
-stacked and non-stacked spaces. I need to convert this to Lua so we can do this
-with Hammerspoon.
-#+begin_src shell :tangle no
-cmd + shift - k : if [ "$(yabai -m query --spaces --space | jq -r '.type')" = "stack" ]; then (yabai -m window --focus stack.next || yabai -m window --focus stack.first); else yabai -m window --focus next || yabai -m window --focus first; fi
-cmd + shift - j : if [ "$(yabai -m query --spaces --space | jq -r '.type')" = "stack" ]; then (yabai -m window --focus stack.prev || yabai -m window --focus stack.last); else yabai -m window --focus prev || yabai -m window --focus last; fi
+-- VimMode = hs.loadSpoon('VimMode')
+-- vim = VimMode:new()
+-- vim:disableForApp('Emacs'):enterWithSequence('jk')
 #+end_src
 **** Edit With Emacs
 This spoon allows me to take any text area and edit that text area with emacs,
@@ -1128,6 +1086,52 @@ yabai -m config --space "$currspace" left_padding $spadding
 yabai -m config --space "$currspace" right_padding $padding
 yabai -m config --space "$currspace" window_gap $padding
 #+end_src
+**** Keybindings
+
+First, some abstraction to make calling into Yabai a bit simpler -- I stole this
+from [[https://github.com/rtauziac/Hammerspoon-Yabai/blob/4c1c130b089a3c8cc87a3f0dcf13ae0ae64b34a0/.hammerspoon/yabai.lua][here]]:
+#+begin_src lua :tangle ~/.hammerspoon/init.lua
+function yabaiCmd(args)
+  yBin = "/usr/local/bin/yabai"
+  runCmd(yBin, args)
+end
+
+function y(a)
+  return function() yabaiCmd(a) end
+end
+#+end_src
+
+And now the hotkeys!
+
+Let's setup a reload hotkey for Yabai:
+#+begin_src lua :tangle ~/.hammerspoon/init.lua
+-- bk(super, "r", "Yabai Reloaded", r("/bin/launchctl", {"kickstart", "-k", "gui/${UID}/homebrew.mxcl.yabai"}))
+bk(super, "r", "Yabai: Reloaded", r("/usr/local/bin/brew", "services restart yabai"))
+#+end_src
+
+Now some spaces related hotkeys!
+#+begin_src lua :tangle ~/.hammerspoon/init.lua
+bk(super, "n", "Yabai: Created a new space", y("-m space --create"))
+#+end_src
+
+It'd be nice to be able to toggle the various layouts for a space:
+#+begin_src lua :tangle ~/.hammerspoon/init.lua
+bk(super, "s", "Yabai: Stacked Layout", y("-m space --layout stack"))
+bk(super, "b", "Yabai: BSP Layout", y("-m space --layout bsp"))
+bk(super, "f", "Yabai: Floating Layout", y("-m space --layout float"))
+#+end_src
+
+How about some stacking related one?!
+#+begin_src lua :tangle ~/.hammerspoon/init.lua
+#+end_src
+
+These some bindings [[https://github.com/koekeishiya/yabai/issues/203#issuecomment-1088641580][someone created]] so that you can use the same keys for
+cycling yabai stacked and non-stacked spaces. I need to convert this to Lua so
+we can do this with Hammerspoon.
+#+begin_src shell :tangle no
+cmd + shift - k : if [ "$(yabai -m query --spaces --space | jq -r '.type')" = "stack" ]; then (yabai -m window --focus stack.next || yabai -m window --focus stack.first); else yabai -m window --focus next || yabai -m window --focus first; fi
+cmd + shift - j : if [ "$(yabai -m query --spaces --space | jq -r '.type')" = "stack" ]; then (yabai -m window --focus stack.prev || yabai -m window --focus stack.last); else yabai -m window --focus prev || yabai -m window --focus last; fi
+#+end_src
 **** Named Spaces
 ***** Comms Space
 This is the space for my communication apps, namely Slack, Teams, Signal, and Discord
@@ -1135,6 +1139,46 @@ This is the space for my communication apps, namely Slack, Teams, Signal, and Di
 
 #+end_src
 *** Yabai Utils
+**** stackline
+This is a spoon for Hammerspoon and it will help us visualize yabai's stacked
+windows
+#+name: stacklineSpoon
+#+begin_src lua :tangle no
+table.insert(spoonList, {
+               name = "stackline",
+               uri = "git@github.com:pard68/stackline.git",
+               path = "stackline"
+})
+#+end_src
+
+Stackline isn't technically a spoon but that might be changing, and since I'd rather just pretend it is than write a special case in the ~spoonManager~ just for stackline, we're just gonna have to get a little hacky...
+#+begin_src lua :tangle ~/.hammerspoon/init.lua
+sl = require('stackline')
+sl:init()
+#+end_src
+
+We also need to add the following to the yabai config so that stackline redraws
+can be triggered with yabai signals to speed up the drawing process. These
+signals came from the these two issues in the stackline repo; "[[https://github.com/AdamWagner/stackline/issues/110][Trigger refreshes
+using yabail -m signal]]" and "[[https://github.com/AdamWagner/stackline/issues/113][Reduce redraw lag when switched spaces]]"
+#+begin_src shell :tangle ~/.config/yabai/yabairc
+yabai -m signal --add event=space_changed action="hs -c 'stackline.manager:update({forceRedraw = true})'"
+yabai -m signal --add event=display_added action="hs -c 'stackline.refresh()"
+yabai -m signal --add event=display_removed action="hs -c 'stackline.refresh()"
+yabai -m signal --add event=display_changed action="hs -c 'stackline.refresh()"
+yabai -m signal --add event=space_changed action="hs -c 'stackline.refresh()"
+yabai -m signal --add event=application_visible action="hs -c 'stackline.refresh()"
+yabai -m signal --add event=application_hidden action="hs -c 'stackline.refresh()"
+yabai -m signal --add event=window_created action="hs -c 'stackline.refresh()"
+yabai -m signal --add event=window_destroyed action="hs -c 'stackline.refresh()"
+#+end_src
+
+These two lines help with some issues when you switch focus with yabai commands. I found them in this [[https://github.com/AdamWagner/stackline/issues/67#issuecomment-1193396400][issue comment]].
+#+begin_src shell :tangle ~/.config/yabai/yabairc
+yabai -m signal --add event=window_created title="Hammerspoon Console" action="yabai -m window \$(yabai -m query --windows | jq '.[] | select(.app==\"Hammerspoon\" and .name==\"Hammerspoon Console\") | .id') --minimize"
+yabai -m rule --add app="Hammerspoon" title="" manage=on layer="above" sticky=on
+#+end_src
+***** Keybindings
 **** ymsp
 The Yabai Master-stack Plugin is a tool that takes the BSP mode of Yabai and instead switches Yabai to a master-stack layout like in dwm. This means there is one main window which takes up the majority of the screen and then the remaining windows take up an equal portion of the remaining portion of the screen. To use ymsp we need to install it from npm:
 #+begin_src shell :tangle no
@@ -1155,92 +1199,48 @@ yabai -m signal --add event=application_launched action='ymsp window-created'
 yabai -m signal --add event=window_moved action='ymsp window-moved'
 ymsp on-yabai-start
 #+end_src
-** sketchybar
+** spacebar
 :PROPERTIES:
-:header-args: :tangle ~/.config/sketchybar/sketchybarrc :comments link :mkdirp yes :padline no :noweb tangle :cache yes :tangle-mode (identity #o755)
+:header-args: :tangle ~/.config/spacebar/spacebarrc :comments link :mkdirp yes :padline no :noweb tangle :cache yes :tangle-mode (identity #o755)
 :END:
-
 *** Boilerplate
 #+begin_src shell :comments no
 #!/usr/bin/env sh
 <<boilerplate-file-header>>
 #+end_src
-
-We'll add some signals to yabai so it can trigger sketchybar events
-#+begin_src shell :tangle ~/.config/yabai/yabairc
-yabai -m signal --add event=window_created action="sketchybar -m --trigger yabai_window &> /dev/null"
-yabai -m signal --add event=window_destroyed action="sketchybar -m --trigger yabai_window &> /dev/null"
-yabai -m signal --add event=window_focused action="sketchybar -m --trigger yabai_window &> /dev/null"
-yabai -m signal --add event=space_changed action="sketchybar -m --trigger yabai_window &> /dev/null"
-yabai -m signal --add event=window_title_changed action="sketchybar -m --trigger yabai_window &> /dev/null"
-#+end_src
 *** Config
 **** Defaults
 #+begin_src shell
-sketchybar --bar color=0xff366000a36
-sketchybar --bar height=26
-sketchybar --bar blur_radius=100
-sketchybar --bar shadow=on
-sketchybar -m --add event yabai_window
+spacebar -m config position top
+spacebar -m config height 26
+spacebar -m config title on
+spacebar -m config spaces on
+spacebar -m config clock on
+spacebar -m config power on
+spacebar -m config padding_left 20
+spacebar -m config padding_right 20
+spacebar -m config spacing_left 25
+spacebar -m config spacing_right 15
+spacebar -m config text_font "Helvetica Neue:Bold:12.0"
+spacebar -m config icon_font "Font Awesome 6 Free:Solid:12.0"
+spacebar -m config background_color 0xff202020
+spacebar -m config foreground_color 0xffa8a8a8
+spacebar -m config power_icon_color 0xffcd950c
+spacebar -m config battery_icon_color 0xffd75f5f
+spacebar -m config dnd_icon_color 0xffa8a8a8
+spacebar -m config clock_icon_color 0xffa8a8a8
+spacebar -m config power_icon_strip  
+spacebar -m config space_icon •
+spacebar -m config space_icon_color 0xffffab91
+spacebar -m config space_icon_color_secondary 0xff78c4d4
+spacebar -m config space_icon_color_tertiary 0xfffff9b0
+spacebar -m config space_icon_strip 1 2 3 4 5 6 7 8 9 10
+spacebar -m config clock_icon 
+spacebar -m config dnd_icon 
+spacebar -m config clock_format "%y/%m/%d %R"
+
+echo "spacebar configuration loaded.."
 #+end_src
-**** Clock
-
-We can add the time:
-#+begin_src shell
-sketchybar --add item time right
-sketchybar --set time script='sketchybar --set time label="$(date "+%I:%M%p")"'
-sketchybar --set time label.padding_left=20
-sketchybar --set time update_freq=2
-#+end_src
-
-And let's not forget the date:
-#+begin_src shell
-sketchybar --add item date right
-sketchybar --set date script='sketchybar --set date label="$(date "+%y/%d/%m (%a)")"'
-sketchybar --set date update_freq=4
-#+end_src
-**** Active Window Title
-This will show the title of the currently active window in the middle of the
-bar. I stole it from [[https://github.com/oatmeaI/dotfiles/blob/8a10e48798a9711574e4c16f05d11e1ed6866769/.config/sketchybar/sketchybarrc][here]].
-#+begin_src shell
-TITLE_SCRIPT='
-WINDOW_TITLE=$(/usr/local/bin/yabai -m query --windows --window | jq -r ".title")
-if [[ ${#WINDOW_TITLE} -gt 150 ]]; then
-  WINDOW_TITLE=$(echo "$WINDOW_TITLE" | cut -c 1-150)
-  sketchybar -m --set window label="$WINDOW_TITLE"…
-  exit 0
-fi
-
-APP_TITLE=$(/usr/local/bin/yabai -m query --windows --window | jq -r ".app")
-if [[ $WINDOW_TITLE = "" ]]; then
-    if [[ $APP_TITLE = "" ]]; then
-        TITLE=""
-    else
-        TITLE="${APP_TITLE}"
-    fi
-else
-    CLEANED_WIN_TITLE=${WINDOW_TITLE//$APP_TITLE | /}
-    CLEANED_WIN_TITLE=${CLEANED_WIN_TITLE// | $APP_TITLE/}
-    CLEANED_WIN_TITLE=${CLEANED_WIN_TITLE//$APP_TITLE - /}
-    CLEANED_WIN_TITLE=${CLEANED_WIN_TITLE//$APP_TITLE – /}
-    CLEANED_WIN_TITLE=${CLEANED_WIN_TITLE// – $APP_TITLE/}
-    CLEANED_WIN_TITLE=${CLEANED_WIN_TITLE// - $APP_TITLE/}
-    if [[ $APP_TITLE = $CLEANED_WIN_TITLE ]]; then
-        TITLE="${APP_TITLE}"
-    else
-        TITLE="${APP_TITLE} | ${CLEANED_WIN_TITLE}"
-    fi
-fi
-sketchybar -m --set window label="$TITLE"
-'
-
-sketchybar --add item window center
-sketchybar --set window label.font="FiraCode Nerd Font Mono:Medium:12.0"
-sketchybar --set window script="$TITLE_SCRIPT"
-sketchybar --subscribe window yabai_window
-$($TITLE_SCRIPT)
-#+end_src
-
 * License
 
 #+BEGIN_SRC :tangle no
