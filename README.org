@@ -1,5 +1,5 @@
 :PROPERTIES:
-:MODIFIED: <2022-08-20 Sat 06:43>
+:MODIFIED: <2022-08-25 Thu 11:03>
 :END:
 #+title: Literate Dotfiles
 #+html_head: <link rel='shortcut icon' type='image/png' href='https://www.gnu.org/software/emacs/favicon.png'>
@@ -16,6 +16,11 @@ locations. To update a config file, make the edits and then run the same
 Org-Babel will only change files if there are changes.
 
 * Log
+** <2022-08-25 Thu>
+I've "disabled" yabai, spacebar, and those related things. I'll probably
+eventually delete them from this doc or something like that. Yabai is not
+playing nicely and I'm looking for an alternative solution, likely something
+with just Hammerspoon alone.
 ** <2022-08-18 Thu>
 I'm trying to decide how to incorporate my doom config into this. I /really/
 want to be /orgish/ and use one file for all my configurations. I suspect that
@@ -1000,9 +1005,9 @@ SyncState *
 #+end_src
 ** yabai
 :PROPERTIES:
-:header-args: :tangle ~/.config/yabai/yabairc :comments link :mkdirp yes :padline no :noweb tangle :cache yes :tangle-mode (identity #o755)
+:header-args: :tangle no
 :END:
-
+#:header-args: :tangle ~/.config/yabai/yabairc :comments link :mkdirp yes :padline no :noweb tangle :cache yes :tangle-mode (identity #o755)
 *** Boilerplate
 #+begin_src shell :comments no
 #!/usr/bin/env sh
@@ -1038,7 +1043,7 @@ yabai -m config layout                       bsp
 
 Let's make room for the bar.
 #+begin_src shell
-BAR_HEIGHT=$(sketchybar --query bar | jq ."height")
+BAR_HEIGHT=$(spacebar -m config height)
 yabai -m config external_bar all:$BAR_HEIGHT:0
 #+end_src
 
@@ -1067,7 +1072,8 @@ yabai -m signal --add event=window_destroyed action="~/.config/yabai/refresh.sh"
 #+end_src
 
 And of course ~refresh.sh~, which I stole from these two lovely [[https://github.com/AdamWagner/stackline/issues/57#issuecomment-766596737][comm]]-[[https://github.com/AdamWagner/stackline/issues/57#issuecomment-873378890][ents]]:
-#+begin_src shell :tangle ~/.config/yabai/refresh.sh :comments link :mkdirp yes :padline no :noweb tangle :cache yes :tangle-mode (identity #o755)
+##+begin_src shell :tangle ~/.config/yabai/refresh.sh :comments link :mkdirp yes :padline no :noweb tangle :cache yes :tangle-mode (identity #o755)
+#+begin_src shell :tangle no
 #!/usr/bin/env bash
 
 number_of_windows=$(yabai -m query --windows --space | /usr/local/bin/jq 'length')
@@ -1090,7 +1096,8 @@ yabai -m config --space "$currspace" window_gap $padding
 
 First, some abstraction to make calling into Yabai a bit simpler -- I stole this
 from [[https://github.com/rtauziac/Hammerspoon-Yabai/blob/4c1c130b089a3c8cc87a3f0dcf13ae0ae64b34a0/.hammerspoon/yabai.lua][here]]:
-#+begin_src lua :tangle ~/.hammerspoon/init.lua
+##+begin_src lua :tangle ~/.hammerspoon/init.lua
+#+begin_src lua :tangle no
 function yabaiCmd(args)
   yBin = "/usr/local/bin/yabai"
   runCmd(yBin, args)
@@ -1104,25 +1111,29 @@ end
 And now the hotkeys!
 
 Let's setup a reload hotkey for Yabai:
-#+begin_src lua :tangle ~/.hammerspoon/init.lua
+##+begin_src lua :tangle ~/.hammerspoon/init.lua
+#+begin_src lua :tangle no
 -- bk(super, "r", "Yabai Reloaded", r("/bin/launchctl", {"kickstart", "-k", "gui/${UID}/homebrew.mxcl.yabai"}))
 bk(super, "r", "Yabai: Reloaded", r("/usr/local/bin/brew", "services restart yabai"))
 #+end_src
 
 Now some spaces related hotkeys!
-#+begin_src lua :tangle ~/.hammerspoon/init.lua
+##+begin_src lua :tangle ~/.hammerspoon/init.lua
+#+begin_src lua :tangle no
 bk(super, "n", "Yabai: Created a new space", y("-m space --create"))
 #+end_src
 
 It'd be nice to be able to toggle the various layouts for a space:
-#+begin_src lua :tangle ~/.hammerspoon/init.lua
+##+begin_src lua :tangle ~/.hammerspoon/init.lua
+#+begin_src lua :tangle no
 bk(super, "s", "Yabai: Stacked Layout", y("-m space --layout stack"))
 bk(super, "b", "Yabai: BSP Layout", y("-m space --layout bsp"))
 bk(super, "f", "Yabai: Floating Layout", y("-m space --layout float"))
 #+end_src
 
 How about some stacking related one?!
-#+begin_src lua :tangle ~/.hammerspoon/init.lua
+##+begin_src lua :tangle ~/.hammerspoon/init.lua
+#+begin_src lua :tangle no
 #+end_src
 
 These some bindings [[https://github.com/koekeishiya/yabai/issues/203#issuecomment-1088641580][someone created]] so that you can use the same keys for
@@ -1152,7 +1163,8 @@ table.insert(spoonList, {
 #+end_src
 
 Stackline isn't technically a spoon but that might be changing, and since I'd rather just pretend it is than write a special case in the ~spoonManager~ just for stackline, we're just gonna have to get a little hacky...
-#+begin_src lua :tangle ~/.hammerspoon/init.lua
+##+begin_src lua :tangle ~/.hammerspoon/init.lua
+#+begin_src lua :tangle no
 sl = require('stackline')
 sl:init()
 #+end_src
@@ -1161,7 +1173,8 @@ We also need to add the following to the yabai config so that stackline redraws
 can be triggered with yabai signals to speed up the drawing process. These
 signals came from the these two issues in the stackline repo; "[[https://github.com/AdamWagner/stackline/issues/110][Trigger refreshes
 using yabail -m signal]]" and "[[https://github.com/AdamWagner/stackline/issues/113][Reduce redraw lag when switched spaces]]"
-#+begin_src shell :tangle ~/.config/yabai/yabairc
+##+begin_src shell :tangle ~/.config/yabai/yabairc
+#+begin_src shell :tangle no
 yabai -m signal --add event=space_changed action="hs -c 'stackline.manager:update({forceRedraw = true})'"
 yabai -m signal --add event=display_added action="hs -c 'stackline.refresh()"
 yabai -m signal --add event=display_removed action="hs -c 'stackline.refresh()"
@@ -1174,7 +1187,8 @@ yabai -m signal --add event=window_destroyed action="hs -c 'stackline.refresh()"
 #+end_src
 
 These two lines help with some issues when you switch focus with yabai commands. I found them in this [[https://github.com/AdamWagner/stackline/issues/67#issuecomment-1193396400][issue comment]].
-#+begin_src shell :tangle ~/.config/yabai/yabairc
+##+begin_src shell :tangle ~/.config/yabai/yabairc
+#+begin_src shell :tangle no
 yabai -m signal --add event=window_created title="Hammerspoon Console" action="yabai -m window \$(yabai -m query --windows | jq '.[] | select(.app==\"Hammerspoon\" and .name==\"Hammerspoon Console\") | .id') --minimize"
 yabai -m rule --add app="Hammerspoon" title="" manage=on layer="above" sticky=on
 #+end_src
@@ -1186,7 +1200,8 @@ npm install --global yabai-master-stack-plugin
 #+end_src
 
 And then add the following config settings for ymsp:
-#+begin_src json :tangle ~/.config/ymsp/ymsp.config.json :comments no :mkdirp yes :padline no :cache yes
+##+begin_src json :tangle ~/.config/ymsp/ymsp.config.json :comments no :mkdirp yes :padline no :cache yes
+#+begin_src json :tangle no
 {
   "yabaiPath": "/usr/local/bin/yabai"
 }
@@ -1201,8 +1216,9 @@ ymsp on-yabai-start
 #+end_src
 ** spacebar
 :PROPERTIES:
-:header-args: :tangle ~/.config/spacebar/spacebarrc :comments link :mkdirp yes :padline no :noweb tangle :cache yes :tangle-mode (identity #o755)
+:header-args: :tangle no
 :END:
+#:header-args: :tangle ~/.config/spacebar/spacebarrc :comments link :mkdirp yes :padline no :noweb tangle :cache yes :tangle-mode (identity #o755)
 *** Boilerplate
 #+begin_src shell :comments no
 #!/usr/bin/env sh
