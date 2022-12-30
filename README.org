@@ -1,5 +1,5 @@
 :PROPERTIES:
-:MODIFIED: <2022-08-25 Thu 11:03>
+:MODIFIED: <2022-08-25 Thu 16:58>
 :END:
 #+title: Literate Dotfiles
 #+html_head: <link rel='shortcut icon' type='image/png' href='https://www.gnu.org/software/emacs/favicon.png'>
@@ -352,6 +352,11 @@ require'hs.ipc'
 hs.ipc.cliInstall()
 #+end_src
 
+**** Logger
+#+begin_src lua
+local configLog = hs.logger.new('Config')
+#+end_src
+
 **** Config Reloader
 And let's setup auto reloading for hammerspoon. First the reload function,
 stolen from [[https://github.com/wangshub/hammerspoon-config/blob/06ff4db98baa4e568db0f79f3de0c58a578535a2/reload/reload.lua][here]]:
@@ -397,6 +402,12 @@ reloadConfig.init()
 reloadConfig.start()
 #+end_src
 
+*** Screens
+Let's setup the names of our screens for use later...
+#+begin_src lua
+laptopScreen = hs.screen.find("Built%-in Retina Display")
+leftScreen =  hs.screen.find("DELL P2414H")
+#+end_src
 *** Keybindings
 Next let's setup a few default key combos.
 #+begin_src lua
@@ -463,6 +474,212 @@ Great, and now for the keybinding:
 bk(hyper, "d", "Toggle: Dark-mode", function() hs.osascript.applescriptFromFile("applescripts/toggle-dark-mode.applescript") end)
 #+end_src
 
+*** Spaces Management
+#+begin_src lua
+spaces = require('hs.spaces')
+
+function listAllSpaces()
+  local allSpaces = {}
+  for _, displaySpaces in pairs(hs.spaces.allSpaces()) do
+    for _, spaceID in pairs(displaySpaces) do
+      table.insert(allSpaces, spaceID)
+    end
+  end
+  return allSpaces
+end
+
+existingSpaces = listAllSpaces()
+
+spacesMenu = hs.menubar.new()
+spacesMenu:setTitle("👨‍🚀")
+spacesMenu:setTooltip("Spaces Manager")
+
+spacesTable = {
+  www = {
+    id = {}, -- keep this empty
+    layout = {}, -- keep this empty
+    emoji = "🌐",
+    screen = laptopScreen,
+    binding = {mod = super, key = "b"},
+    apps = {
+      {
+        id = {},
+        name ="Vivaldi",
+        layout = hs.layout.maximized,
+        binding = {mod = super, key = "v"},
+      },
+      {
+        id = {},
+        name ="Firefox",
+        layout = hs.layout.maximized,
+        binding = {mod = super, key = "f"},
+      },
+    },
+  },
+  terminal = {
+    id = {}, -- keep this empty
+    layout = {}, -- keep this empty
+    emoji = "💻️",
+    screen = leftScreen,
+    binding = nil,
+    apps = {
+      {
+        id = {},
+        name ="kitty",
+        layout = hs.layout.maximized,
+        binding = {mod = super, key = "q"},
+      },
+    },
+  },
+  editor = {
+    id = {}, -- keep this empty
+    layout = {}, -- keep this empty
+    emoji = "📜️",
+    screen = leftScreen,
+    binding = nil,
+    apps = {
+      {
+        id = {},
+        name ="emacs",
+        layout = hs.layout.maximized,
+        binding = {mod = super, key = "e"},
+      },
+    },
+  },
+  comms = {
+    id = {}, -- keep this empty
+    layout = {}, -- keep this empty
+    emoji = "🛰️",
+    screen = leftScreen,
+    binding = {mod = super, key = "c"},
+    apps = {
+      {
+        id = {},
+        name ="Slack",
+        layout = hs.layout.maximized,
+        binding = {mod = super, key = "s"},
+      },
+      {
+        id = {},
+        name = "Microsoft Teams",
+        layout = hs.layout.maximized,
+        binding = {mod = super, key = "t"},
+      },
+      {
+        id = {},
+        name = "Discord",
+        layout = hs.layout.maximized,
+        binding = {mod = super, key = "r"},
+      },
+      {
+        id = {},
+        name = "Signal",
+        layout = hs.layout.maximized,
+        binding = {mod = super, key = "g"},
+      },
+    },
+  }
+}
+
+function tableDiff(a, b)
+  -- Find the difference between two tables
+  -- Assumes that there is only one difference
+  local aa = {}
+  for k,v in pairs(a) do aa[v]=true end
+  for k,v in pairs(b) do aa[v]=nil end
+  for k,v in pairs(aa) do return k end
+end
+
+function setupSpace(spaceName, spaceSettings)
+  spaces.addSpaceToScreen()
+  local newSpaces = listAllSpaces()
+  local spaceId = tableDiff(newSpaces, existingSpaces)
+  spacesTable[spaceName].id = spaceId
+  if spaceSettings.binding then
+    print(spaceId)
+    bk(spaceSettings.binding.mod,
+       spaceSettings.binding.key,
+       "Goto " .. spaceName,
+       function() spaces.gotoSpace(spaceId) end)
+  end
+  existingSpaces = newSpaces
+  for _, app in pairs(spaceSettings.apps) do
+    hs.application.launchOrFocus(app.name)
+    app.id = hs.application.find(app.name)
+    table.insert(spacesTable[spaceName].layout, {
+                    app.id,
+                    nil,
+                    spaceSettings.screen,
+                    app.layout,
+                    nil, nil
+    })
+    if app.binding then
+      bk(app.binding.mod,
+         app.binding.key,
+         "Goto " .. app.name,
+         function() hs.application.launchOrFocus(app.name) end)
+    end
+  end
+  hs.layout.apply(spaceSettings.layout)
+end
+
+function initSpaces(st)
+    for spaceName, spaceSettings in pairs(st) do
+      setupSpace(spaceName, spaceSettings)
+    end
+end
+
+function len(t)
+  local n = 0
+  for _, _ in pairs(t) do
+    n = n + 1
+  end
+  return n
+end
+
+function cleanUnusedSpaces()
+  local allSpaces = listAllSpaces()
+  local allWindows = {}
+  local spacesWindowData = {}
+  local hasFullscreen = false
+  for _, sid in pairs(allSpaces) do
+    local windows = spaces.windowsForSpace(sid)
+    for _, i in pairs(windows) do
+      allWindows[i] = (allWindows[i] or 0) + 1
+    end
+    if spaces.spaceType(sid) == 'fullscreen' then
+      hasFullscreen = true
+    end
+    spacesWindowData[sid] = windows
+  end
+  for sid, data in pairs(spacesWindowData) do
+    remove = false
+    local copy = data
+    for index, id in pairs(data) do
+      if allWindows[id] > 1 then
+        copy[index] = nil
+      end
+    end
+    if not hasFullscreen and len(copy) < 3 or hasFullscreen and len(copy) < 4 then
+      configLog.i("Removing", sid)
+      spaces.removeSpace(sid)
+    end
+  end
+end
+
+initSpaces(spacesTable)
+cleanUnusedSpaces()
+#+end_src
+
+Then let's cleanup the empty spaces that might have been created.
+#+begin_src lua
+
+function clearEmptySpaces()
+    local allSpaces = listAllSpaces()
+end
+clearEmptySpaces()
+#+end_src
+
 *** Spoons
 **** Bootstrap
 ***** spoonManager
@@ -493,7 +710,6 @@ spoonList = {
     uri = "https://github.com/Hammerspoon/Spoons/raw/master/Spoons/SpoonInstall.spoon.zip"
   }
 }
-<<stacklineSpoon>>
 <<VimModeSpoon>>
 <<editWithEmacsSpoon>>
 #+end_src
@@ -519,7 +735,7 @@ function spoonManager.install(spoon)
   if ext == ".zip" then
     spoonManager.installZip(spoon)
   else
-    print("Unknown file type, not installing " .. spoon.name)
+    configLog.e("Unknown file type, not installing " .. spoon.name)
   end
   reloadConfig.start()
 end
@@ -543,11 +759,11 @@ function spoonManager.installMaybe()
     end
     spoon.path = install_path
     if not installed then
-      print("Installing " .. spoon.name .. " from uri: " .. spoon.uri)
+      configLog.i("Installing " .. spoon.name .. " from uri: " .. spoon.uri)
       hs.alert("Install " .. spoon.name .. ". This will just take a moment!")
       spoonManager.install(spoon)
     else
-      print(spoon.name .. " already installed!")
+      configLog.i(spoon.name .. " already installed!")
     end
   end
 end
@@ -675,7 +891,7 @@ Install:andUse("ClipboardTool", {
 **** Vim Mode
 This spoon lets you have vim style movement in all the places!
 #+name: VimModeSpoon
-#+begin_src lua
+#+begin_src lua :tangle no
 table.insert(spoonList, {
                name = "VimMode",
                uri = "https://github.com/dbalatero/VimMode.spoon.git",
